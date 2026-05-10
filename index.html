@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BUCKSHOT ROULETTE</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blood:#8b0000;--blood-bright:#cc0000;--blood-dark:#4a0000;
+  --rust:#8b4513;--rust-dark:#5c2d0e;--metal:#3a3a3a;
+  --skin:#c4956a;--skin-dark:#8b6d4f;--gold:#c5a000;
+  --black:#0a0a0a;--dark:#1a1a1a;--green:#4a8a4a;
+}
+body{
+  background:#0a0a0a;color:var(--skin);font-family:'Courier New',monospace;
+  overflow:hidden;height:100vh;width:100vw;cursor:default;user-select:none;
+  -webkit-user-select:none;
+}
+
+/* ===== SCREEN SHAKE ===== */
+@keyframes shake{
+  0%,100%{transform:translate(0,0)}
+  10%{transform:translate(-6px,-4px)}
+  20%{transform:translate(6px,4px)}
+  30%{transform:translate(-4px,6px)}
+  40%{transform:translate(4px,-6px)}
+  50%{transform:translate(-6px,4px)}
+  60%{transform:translate(6px,-4px)}
+  70%{transform:translate(-4px,-6px)}
+  80%{transform:translate(4px,6px)}
+  90%{transform:translate(-6px,-4px)}
+}
+.screen-shake{animation:shake .4s ease-in-out}
+
+/* ===== FLICKER ===== */
+@keyframes flicker{
+  0%,100%{opacity:1}5%{opacity:.85}10%{opacity:1}50%{opacity:1}
+  52%{opacity:.7}54%{opacity:1}80%{opacity:1}82%{opacity:.8}83%{opacity:1}
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,#1a0a0a 0%,#0a0505 50%,#000 100%);
+  z-index:100;cursor:pointer;
+}
+#title-screen .title{
+  font-size:clamp(2rem,8vw,4rem);color:var(--blood-bright);
+  text-shadow:0 0 20px var(--blood),0 0 40px var(--blood-dark);
+  letter-spacing:.1em;animation:flicker 4s infinite;
+  text-align:center;line-height:1.3;margin-bottom:.5rem;
+}
+#title-screen .subtitle{
+  font-size:clamp(.8rem,3vw,1.5rem);color:var(--rust);
+  letter-spacing:.3em;text-shadow:0 0 10px var(--rust-dark);margin-bottom:2rem;
+}
+#title-screen .click-prompt{
+  font-size:clamp(.7rem,2.5vw,1rem);color:var(--skin-dark);
+  animation:pulse 2s infinite;letter-spacing:.15em;
+}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+.blood-drip{
+  position:absolute;top:0;width:2px;
+  background:linear-gradient(to bottom,var(--blood-bright),transparent);
+  animation:drip 3s ease-in infinite;opacity:.5;
+}
+@keyframes drip{0%{height:0;opacity:0}20%{opacity:.5}100%{height:120px;opacity:0}}
+
+/* ===== GAME SCREEN ===== */
+#game-screen{
+  display:none;position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,#1a0f0a 0%,#0d0805 40%,#050302 100%);
+  flex-direction:column;align-items:center;
+}
+
+/* ===== STATUS BAR ===== */
+#status-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  width:100%;padding:4px 8px;
+  background:linear-gradient(to bottom,rgba(30,15,10,.9),rgba(20,10,5,.7));
+  border-bottom:2px solid var(--rust-dark);
+  font-size:.7rem;color:var(--skin-dark);
+  text-transform:uppercase;letter-spacing:.1em;flex-shrink:0;
+}
+#round-display{color:var(--gold);font-weight:bold}
+#round-display span{color:var(--blood-bright)}
+
+/* ===== HEALTH ===== */
+.health-container{display:flex;gap:2px;align-items:center}
+.heart{
+  width:14px;height:14px;position:relative;display:inline-block;
+}
+.heart::before,.heart::after{
+  content:'';position:absolute;top:0;left:7px;
+  width:8px;height:12px;background:var(--blood-bright);
+  border-radius:8px 8px 0 0;transform:rotate(-45deg);transform-origin:0 100%;
+  box-shadow:0 0 4px var(--blood);
+}
+.heart::after{left:0;transform:rotate(45deg);transform-origin:100% 100%}
+.heart.empty::before,.heart.empty::after{background:#2a1515;box-shadow:none}
+.heart.lost{animation:heartBreak .4s ease-out}
+@keyframes heartBreak{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+
+/* wire cutter indicator */
+#wire-status{
+  font-size:.6rem;padding:2px 6px;border-radius:3px;letter-spacing:.05em;
+}
+#wire-status.ok{background:rgba(0,50,0,.4);color:#4a8a4a;border:1px solid #0a3a0a}
+#wire-status.cut{background:rgba(50,0,0,.4);color:var(--blood-bright);border:1px solid var(--blood-dark)}
+
+/* ===== MAIN AREA ===== */
+#main-area{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;width:100%;padding:4px 8px;overflow:hidden;
+  position:relative;
+}
+
+/* ===== TABLE ===== */
+#table{
+  width:92%;max-width:500px;min-height:100px;
+  background:radial-gradient(ellipse at 50% 50%,#2a1a0a 0%,#1a0f05 60%,#0d0803 100%);
+  border:3px solid var(--rust-dark);border-radius:50%;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.8),0 0 20px rgba(139,69,19,.15);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;flex-shrink:0;
+}
+
+/* ===== DEALER ===== */
+#dealer{
+  position:absolute;top:-100px;display:flex;flex-direction:column;align-items:center;z-index:5;
+}
+#dealer-dialog{
+  position:absolute;bottom:110px;left:50%;transform:translateX(-50%);
+  background:rgba(10,5,2,.9);border:1px solid var(--rust-dark);
+  padding:4px 10px;border-radius:6px;font-size:.65rem;
+  color:var(--skin);white-space:nowrap;opacity:0;transition:opacity .3s;
+  z-index:20;max-width:220px;text-align:center;
+}
+#dealer-dialog.active{opacity:1}
+#dealer-dialog::after{
+  content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+  border-left:6px solid transparent;border-right:6px solid transparent;
+  border-top:6px solid var(--rust-dark);
+}
+#dealer-body{width:80px;height:100px;position:relative}
+.dealer-head{
+  width:50px;height:56px;background:linear-gradient(135deg,var(--skin),var(--skin-dark));
+  border-radius:50% 50% 45% 45%;position:relative;margin:0 auto;
+  box-shadow:inset -3px -3px 10px rgba(0,0,0,.3);
+}
+.dealer-hat{
+  width:58px;height:18px;background:linear-gradient(to bottom,#2a2a2a,#1a1a1a);
+  border-radius:50% 50% 0 0;position:absolute;top:-3px;left:50%;transform:translateX(-50%);z-index:2;
+}
+.dealer-hat::after{
+  content:'';position:absolute;bottom:-6px;left:-6px;right:-6px;height:8px;background:#1a1a1a;border-radius:2px;
+}
+.dealer-eyes{position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px}
+.dealer-eye{width:9px;height:10px;background:#fff;border-radius:50%;position:relative;overflow:hidden;animation:blink 4s infinite}
+.dealer-eye::after{
+  content:'';position:absolute;width:5px;height:5px;background:#1a0a00;border-radius:50%;
+  top:50%;left:50%;transform:translate(-50%,-50%);transition:all .3s;
+}
+.dealer-eye.squinting{height:3px;margin-top:4px}
+.dead-eye{background:#3a1a1a!important}
+.dead-eye::after{background:#1a0505!important}
+@keyframes blink{0%,90%,100%{height:10px}95%{height:2px;margin-top:4px}}
+
+.dealer-mouth{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  width:18px;height:7px;border-bottom:2px solid #5a3020;border-radius:0 0 50% 50%;transition:all .3s;
+}
+.dealer-mouth.wide{width:25px;height:10px;background:#2a0a0a;border:none;border-radius:0 0 50% 50%}
+.dealer-mouth.wide::after{
+  content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:10px;height:3px;background:#cc4444;border-radius:0 0 50% 50%;
+}
+.dealer-torso{
+  width:56px;height:48px;background:linear-gradient(to bottom,#1a1a1a,#0d0d0d);
+  margin:-3px auto 0;border-radius:8px 8px 0 0;position:relative;
+  animation:breathe 3s ease-in-out infinite;transform-origin:bottom;
+}
+.dealer-torso::before{
+  content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:14px solid var(--skin);
+}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.02)}}
+
+.blood-splatter{
+  position:absolute;width:20px;height:20px;
+  background:radial-gradient(circle,var(--blood-bright) 0%,transparent 70%);
+  border-radius:50%;opacity:0;transition:opacity .3s;
+}
+.blood-splatter.active{opacity:.6}
+#blood-l{top:14px;left:-4px}#blood-r{top:14px;right:-4px}#blood-c{top:28px;left:50%;transform:translateX(-50%)}
+
+/* ===== SHOTGUN ===== */
+#shotgun-container{position:absolute;z-index:10;transition:all .3s;cursor:pointer}
+#shotgun{width:100px;height:22px;position:relative;transition:transform .25s}
+.sg-barrel{position:absolute;left:0;width:64px;height:7px;background:linear-gradient(to bottom,#4a4a4a,#2a2a2a,#3a3a3a);border-radius:2px;top:5px}
+.sg-barrel:last-of-type{top:12px}
+.sg-stock{position:absolute;right:0;width:40px;height:20px;background:linear-gradient(to bottom,#5c3a1a,#3a2510,#4a3015);border-radius:2px 6px 6px 2px;border:1px solid #2a1a0a}
+.sg-trigger{position:absolute;right:24px;bottom:1px;width:6px;height:9px;background:#555;border-radius:2px}
+#shotgun.at-self{transform:rotate(-25deg) translateY(15px)}
+#shotgun.at-dealer{transform:rotate(25deg) translateY(-15px) scaleX(-1)}
+#shotgun.firing{animation:gunFire .12s ease-out}
+@keyframes gunFire{0%{transform:rotate(var(--rg,0deg)) translateY(0)}50%{transform:rotate(var(--rg,0deg)) translateY(-10px)}100%{transform:rotate(var(--rg,0deg)) translateY(0)}}
+
+#muzzle-flash{
+  position:absolute;width:50px;height:50px;
+  background:radial-gradient(circle,#fff 0%,#ffaa00 20%,#ff4400 40%,transparent 70%);
+  border-radius:50%;left:-30px;top:50%;transform:translateY(-50%);
+  opacity:0;pointer-events:none;z-index:20;
+}
+#muzzle-flash.active{animation:flash .12s ease-out}
+@keyframes flash{0%{opacity:1;transform:translateY(-50%) scale(.4)}100%{opacity:0;transform:translateY(-50%) scale(1.2)}}
+
+/* ===== SHELLS ===== */
+#shells-display{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:4px;z-index:15;
+}
+#shells-row{display:flex;gap:4px;min-height:22px;align-items:center}
+.shell{
+  width:9px;height:20px;border-radius:2px 2px 4px 4px;
+  position:relative;transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.shell::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:6px;border-radius:2px 2px 0 0;
+}
+.shell.live{background:linear-gradient(to right,#b8860b,#daa520,#b8860b)}
+.shell.live::before{background:linear-gradient(to bottom,#4a4a4a,#666)}
+.shell.blank{background:linear-gradient(to right,#8b7355,#a0896a,#8b7355)}
+.shell.blank::before{background:linear-gradient(to bottom,#3a3a3a,#555)}
+.shell.unknown{background:linear-gradient(to right,#5a4a3a,#7a6a5a,#5a4a3a);opacity:.6}
+.shell.flying{animation:shellFly .4s ease-out forwards}
+@keyframes shellFly{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-60px) scale(.3);opacity:0}}
+.shell.revealing{animation:shellReveal .4s ease-out}
+@keyframes shellReveal{0%{transform:rotateY(0deg)}50%{transform:rotateY(90deg)}100%{transform:rotateY(0deg)}}
+#shell-count{font-size:.6rem;color:var(--skin-dark);letter-spacing:.05em}
+
+/* ===== TURN INDICATOR ===== */
+#turn-indicator{
+  font-size:.75rem;letter-spacing:.1em;padding:3px 12px;
+  border-radius:3px;text-align:center;z-index:15;margin-top:4px;
+}
+#turn-indicator.player-turn{color:var(--green);background:rgba(10,30,10,.5);border:1px solid #0a3a0a}
+#turn-indicator.dealer-turn{color:var(--blood-bright);background:rgba(30,10,10,.5);border:1px solid var(--blood-dark)}
+
+/* ===== ITEMS ===== */
+#items-container{
+  display:flex;gap:6px;padding:6px;
+  background:linear-gradient(to bottom,rgba(20,10,5,.9),rgba(10,5,2,.9));
+  border:2px solid var(--rust-dark);border-radius:6px;
+  min-height:50px;align-items:center;justify-content:center;
+  flex-wrap:wrap;max-width:94%;margin-top:6px;flex-shrink:0;
+}
+.item-slot{
+  width:40px;height:40px;background:rgba(30,15,10,.8);
+  border:2px solid var(--rust-dark);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;position:relative;font-size:1.1rem;
+}
+.item-slot:hover:not(.empty){border-color:var(--gold);transform:translateY(-2px)}
+.item-slot.selected{border-color:var(--blood-bright);box-shadow:0 0 10px rgba(204,0,0,.3);transform:translateY(-2px)}
+.item-slot.empty{opacity:.25;cursor:default}
+.item-slot .item-count{
+  position:absolute;bottom:-1px;right:1px;font-size:.5rem;color:var(--gold);font-weight:bold;
+}
+.item-slot .item-tooltip{
+  display:none;position:absolute;bottom:46px;left:50%;transform:translateX(-50%);
+  background:rgba(10,5,2,.95);border:1px solid var(--rust);
+  padding:4px 8px;border-radius:3px;font-size:.6rem;white-space:nowrap;
+  z-index:50;color:var(--skin);pointer-events:none;
+}
+.item-slot:hover .item-tooltip{display:block}
+.item-slot.using{animation:itemUse .3s ease-out}
+@keyframes itemUse{0%{transform:scale(1)}50%{transform:scale(1.25);filter:brightness(2)}100%{transform:scale(1)}}
+
+/* ===== ACTION BUTTONS ===== */
+#action-buttons{display:flex;gap:10px;margin-top:8px;z-index:10;flex-shrink:0}
+.action-btn{
+  padding:8px 18px;font-family:'Courier New',monospace;font-size:.8rem;
+  letter-spacing:.08em;border:2px solid;border-radius:3px;
+  cursor:pointer;transition:all .15s;text-transform:uppercase;
+}
+#btn-self{background:linear-gradient(to bottom,#2a0a0a,#1a0505);border-color:var(--blood-dark);color:var(--blood-bright)}
+#btn-self:hover:not(:disabled){box-shadow:0 0 12px rgba(139,0,0,.4);transform:translateY(-1px)}
+#btn-dealer{background:linear-gradient(to bottom,#0a1a0a,#050f05);border-color:#0a3a0a;color:var(--green)}
+#btn-dealer:hover:not(:disabled){box-shadow:0 0 12px rgba(0,100,0,.3);transform:translateY(-1px)}
+.action-btn:disabled{opacity:.25;cursor:not-allowed;transform:none!important}
+
+/* ===== CHARGE / STATUS DISPLAY ===== */
+#charge-display{display:flex;gap:6px;align-items:center;font-size:.65rem}
+.charge-indicator{padding:2px 6px;border-radius:3px;border:1px solid}
+.charge-indicator.saw{color:#ff6644;background:rgba(50,10,0,.4);border-color:#662200}
+.charge-indicator.cuffs{color:#6688cc;background:rgba(10,10,40,.4);border-color:#2233aa}
+.charge-indicator.invert{color:#cc66cc;background:rgba(30,10,40,.4);border-color:#662266}
+
+/* ===== OVERLAYS ===== */
+#message-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+}
+#message-overlay.active{display:flex}
+#message-text{font-size:2rem;color:var(--blood-bright);text-shadow:0 0 15px var(--blood);text-align:center}
+#message-sub{font-size:.9rem;color:var(--skin-dark);letter-spacing:.08em;text-align:center}
+
+#round-transition{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:150;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+}
+#round-transition.active{display:flex}
+#round-transition .round-title{font-size:2.5rem;color:var(--blood-bright);text-shadow:0 0 25px var(--blood)}
+#round-transition .round-sub{font-size:1rem;color:var(--skin-dark);letter-spacing:.15em}
+
+#game-over{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:250;align-items:center;justify-content:center;flex-direction:column;gap:15px;
+}
+#game-over.active{display:flex}
+#game-over .go-title{font-size:3rem;text-shadow:0 0 30px currentColor}
+#game-over .go-title.dead{color:var(--blood-bright)}
+#game-over .go-title.won{color:var(--gold)}
+#game-over .go-sub{font-size:1rem;color:var(--skin-dark);letter-spacing:.1em;text-align:center;max-width:400px;line-height:1.5}
+#restart-btn{
+  padding:12px 30px;font-family:'Courier New',monospace;font-size:1rem;
+  background:linear-gradient(to bottom,#2a0a0a,#1a0505);
+  border:2px solid var(--blood-dark);color:var(--blood-bright);
+  border-radius:3px;cursor:pointer;letter-spacing:.1em;transition:all .2s;
+}
+#restart-btn:hover{box-shadow:0 0 20px rgba(139,0,0,.5);transform:translateY(-2px)}
+
+/* ===== RULES PANEL ===== */
+#rules-panel{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:300;align-items:center;justify-content:center;padding:10px;overflow-y:auto;
+}
+#rules-panel.active{display:flex}
+#rules-content{
+  max-width:500px;width:100%;background:rgba(15,8,3,.95);
+  border:2px solid var(--rust-dark);border-radius:6px;padding:20px;max-height:85vh;overflow-y:auto;
+}
+#rules-content h2{color:var(--blood-bright);font-size:1.4rem;margin-bottom:10px;text-align:center}
+#rules-content h3{color:var(--gold);font-size:.9rem;margin:10px 0 5px}
+#rules-content p,#rules-content li{color:var(--skin);font-size:.78rem;line-height:1.5;margin-bottom:3px}
+#rules-content ul{padding-left:16px;margin-bottom:8px}
+#rules-content .close-rules{
+  display:block;margin:15px auto 0;padding:8px 24px;
+  font-family:'Courier New',monospace;font-size:.85rem;
+  background:#1a0505;border:2px solid var(--blood-dark);color:var(--blood-bright);
+  border-radius:3px;cursor:pointer;letter-spacing:.08em;
+}
+
+/* ===== SETTINGS BAR ===== */
+#settings-bar{position:fixed;top:2px;right:6px;z-index:50;display:flex;gap:6px}
+.settings-btn{
+  background:none;border:1px solid var(--rust-dark);color:var(--skin-dark);
+  padding:2px 6px;font-family:'Courier New',monospace;font-size:.6rem;
+  cursor:pointer;border-radius:2px;letter-spacing:.05em;
+}
+.settings-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ===== AMBIENT ===== */
+#ambient-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.35)100%);
+}
+#vignette{
+  position:fixed;inset:0;pointer-events:none;z-index:99;
+  box-shadow:inset 0 0 100px rgba(0,0,0,.7);
+}
+
+/* ===== BLOOD STREAK ===== */
+.blood-streak{
+  position:fixed;width:2px;z-index:97;pointer-events:none;
+  background:linear-gradient(to bottom,var(--blood-bright),var(--blood),transparent);
+  animation:bloodDrip 1.5s ease-in forwards;
+}
+@keyframes bloodDrip{0%{height:0;opacity:.7}100%{height:150px;opacity:0}}
+
+/* ===== PARTICLES ===== */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.dust{
+  position:absolute;width:2px;height:2px;background:rgba(196,149,106,.12);
+  border-radius:50%;animation:floatParticle 8s linear infinite;
+}
+@keyframes floatParticle{
+  0%{transform:translateY(100vh) translateX(0);opacity:0}
+  10%{opacity:.25}90%{opacity:.25}
+  100%{transform:translateY(-10px) translateX(40px);opacity:0}
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:400px){
+  .item-slot{width:34px;height:34px;font-size:.9rem}
+  .action-btn{padding:6px 12px;font-size:.7rem}
+  #dealer{top:-85px}
+  #dealer-body{width:65px;height:80px}
+  .dealer-head{width:42px;height:46px}
+  .dealer-torso{width:46px;height:40px}
+  #shotgun{transform:scale(.75)}
+}
+</style>
+</head>
+<body>
+
+<!-- Title Screen -->
+<div id="title-screen">
+  <div class="blood-drip" style="left:10%;animation-delay:0s"></div>
+  <div class="blood-drip" style="left:30%;animation-delay:1.2s"></div>
+  <div class="blood-drip" style="left:50%;animation-delay:0.5s"></div>
+  <div class="blood-drip" style="left:70%;animation-delay:1.8s"></div>
+  <div class="blood-drip" style="left:90%;animation-delay:0.8s"></div>
+  <div class="title">BUCKSHOT<br>ROULETTE</div>
+  <div class="subtitle">— ROBLOX —</div>
+  <div class="click-prompt">[ TAP TO BEGIN ]</div>
+</div>
+
+<!-- Rules Panel -->
+<div id="rules-panel">
+  <div id="rules-content">
+    <h2>📜 RULES</h2>
+    <h3>Objective</h3>
+    <p>Survive the dealer. Reduce his health to zero before yours hits zero.</p>
+    <h3>Health</h3>
+    <p>Both players start each round with <strong>5 lives</strong>. Watch the wire cutter — if your health drops too low, it cuts your wires and you can no longer heal.</p>
+    <h3>Rounds & Items</h3>
+    <p><strong>Round 1:</strong> No items. Pure probability. Shells loaded and you're told how many are live vs blank.</p>
+    <p><strong>Round 2:</strong> 2 items per loadout. The game shifts to resource management.</p>
+    <p><strong>Round 3:</strong> 4 items per loadout. All items available including rare ones.</p>
+    <h3>On Your Turn</h3>
+    <ul>
+      <li><strong>SHOOT YOURSELF</strong> — Blank = survive + extra turn. Live = lose HP, turn passes.</li>
+      <li><strong>SHOOT DEALER</strong> — Blank = nothing, turn passes. Live = dealer loses HP.</li>
+      <li><strong>USE ITEMS</strong> — Use before shooting to gain advantages.</li>
+    </ul>
+    <h3>Items</h3>
+    <ul>
+      <li>💊 <strong>Healing Bottle</strong> — Restore 1 HP (useless if wires cut).</li>
+      <li>🔍 <strong>Magnifying Glass</strong> — Peek at the current shell.</li>
+      <li>🍺 <strong>Beer</strong> — Eject the current shell without firing.</li>
+      <li>🪚 <strong>Handsaw</strong> — Double damage (2 HP instead of 1).</li>
+      <li>🔗 <strong>Handcuffs</strong> — Skip the dealer's next turn.</li>
+      <li>💉 <strong>Adrenaline</strong> — Steal dealer's item and use it immediately.</li>
+      <li>📱 <strong>Burner Phone</strong> — Reveals a future shell (not the current one).</li>
+      <li>🔄 <strong>Polarity Inverter</strong> — Flips the current shell: live↔blank.</li>
+    </ul>
+    <h3>Dealer AI</h3>
+    <p>The dealer is strategic. He tracks shell counts, uses items, and adapts. Watch his behavior — he's not random.</p>
+    <button class="close-rules" onclick="closeRules()">CLOSE</button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen">
+  <div id="particles"></div>
+  <div id="ambient-overlay"></div>
+  <div id="vignette"></div>
+
+  <div id="settings-bar">
+    <button class="settings-btn" onclick="toggleRules()">📜</button>
+    <button class="settings-btn" onclick="toggleAudio()">🔊</button>
+  </div>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div id="round-display">ROUND <span id="round-num">1</span>/3</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div style="display:flex;align-items:center;gap:4px">
+        <span style="font-size:.6rem;color:#5a4a3a">YOU</span>
+        <div class="health-container" id="player-health"></div>
+      </div>
+      <div id="wire-status" class="ok">WIRES OK</div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="health-container" id="dealer-health"></div>
+        <span style="font-size:.6rem;color:#5a4a3a">DEALER</span>
+      </div>
+    </div>
+    <div id="charge-display"></div>
+  </div>
+
+  <!-- Main Area -->
+  <div id="main-area">
+    <!-- Dealer -->
+    <div id="dealer">
+      <div id="dealer-dialog"></div>
+      <div id="dealer-body">
+        <div class="dealer-hat"></div>
+        <div class="dealer-head" id="dealer-head">
+          <div class="dealer-eyes">
+            <div class="dealer-eye" id="dealer-eye-l"></div>
+            <div class="dealer-eye" id="dealer-eye-r"></div>
+          </div>
+          <div class="dealer-mouth" id="dealer-mouth"></div>
+          <div class="blood-splatter" id="blood-l"></div>
+          <div class="blood-splatter" id="blood-r"></div>
+          <div class="blood-splatter" id="blood-c"></div>
+        </div>
+        <div class="dealer-torso"></div>
+      </div>
+    </div>
+
+    <!-- Shotgun -->
+    <div id="shotgun-container">
+      <div id="muzzle-flash"></div>
+      <div id="shotgun">
+        <div class="sg-barrel"></div>
+        <div class="sg-barrel"></div>
+        <div class="sg-stock"></div>
+        <div class="sg-trigger"></div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div id="table"></div>
+
+    <!-- Shells -->
+    <div id="shells-display">
+      <div id="shells-row"></div>
+      <div id="shell-count"></div>
+    </div>
+  </div>
+
+  <!-- Turn Indicator -->
+  <div id="turn-indicator" class="player-turn">YOUR TURN</div>
+
+  <!-- Items -->
+  <div id="items-container"></div>
+
+  <!-- Action Buttons -->
+  <div id="action-buttons">
+    <button class="action-btn" id="btn-self" onclick="shootSelf()">🔫 SELF</button>
+    <button class="action-btn" id="btn-dealer" onclick="shootDealer()">🎯 DEALER</button>
+  </div>
+</div>
+
+<!-- Message Overlay -->
+<div id="message-overlay">
+  <div id="message-text"></div>
+  <div id="message-sub"></div>
+</div>
+
+<!-- Round Transition -->
+<div id="round-transition">
+  <div class="round-title" id="round-title-text">ROUND 1</div>
+  <div class="round-sub" id="round-sub-text">GET READY</div>
+</div>
+
+<!-- Game Over -->
+<div id="game-over">
+  <div class="go-title" id="go-title">YOU DIED</div>
+  <div class="go-sub" id="go-sub">The dealer smiles. Another soul collected.</div>
+  <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
+</div>
+
+<script>
+// ===== GAME STATE =====
+const S={
+  round:1,playerHP:5,dealerHP:5,maxHP:5,
+  shells:[],currentShell:0,
+  playerItems:{},dealerItems:{},
+  isPlayerTurn:true,gameOver:false,audioEnabled:true,
+  sawActive:false,cuffsActive:false,invertActive:false,
+  wiresCut:false,adrenalineUsed:false,
+  dealerKnowsShell:false,dealerKnowsFutureShell:-1,
+  selectedItem:null,processing:false,
+};
+
+// Wire cutter threshold — wires get cut at 2 HP or below
+const WIRE_CUT_THRESHOLD=2;
+
+// Item definitions
+const ITEMS={
+  healing_bottle:{name:'Healing Bottle',emoji:'💊',desc:'Restore 1 HP (needs wires)',max:1},
+  magnifying_glass:{name:'Magnifying Glass',emoji:'🔍',desc:'Peek at current shell',max:1},
+  beer:{name:'Beer',emoji:'🍺',desc:'Eject current shell',max:1},
+  handsaw:{name:'Handsaw',emoji:'🪚',desc:'Double damage (2 HP)',max:1},
+  handcuffs:{name:'Handcuffs',emoji:'🔗',desc:"Skip dealer's next turn",max:1},
+  adrenaline:{name:'Adrenaline',emoji:'💉',desc:'Steal & use dealer item',max:1},
+  burner_phone:{name:'Burner Phone',emoji:'📱',desc:'Reveal a future shell',max:1},
+  polarity_inverter:{name:'Polarity Inverter',emoji:'🔄',desc:'Flip current shell live↔blank',max:1},
+};
+
+// Round configurations — Roblox version
+// Round 1: no items, pure probability
+// Round 2: 2 items each
+// Round 3: 4 items each
+const ROUNDS=[
+  // Round 1: no items
+  {playerHP:5,dealerHP:5,live:2,blank:2,items:{}},
+  // Round 2: 2 items each
+  {playerHP:5,dealerHP:5,live:3,blank:2,items:{
+    healing_bottle:1,magnifying_glass:1,beer:1,handsaw:1,handcuffs:1,adrenaline:0,burner_phone:0,polarity_inverter:0
+  }},
+  // Round 3: 4 items each (all items)
+  {playerHP:5,dealerHP:5,live:4,blank:3,items:{
+    healing_bottle:1,magnifying_glass:1,beer:1,handsaw:1,handcuffs:1,adrenaline:1,burner_phone:1,polarity_inverter:1
+  }},
+];
+
+// Ensure round 2 only gives 2 items — we'll randomly pick from the pool
+const ROUND2_POOL=['healing_bottle','magnifying_glass','beer','handsaw','handcuffs'];
+
+// Dealer dialogue
+const DIALOG={
+  playerTurn:["Your move...","Choose wisely.","Don't keep me waiting.","Tick tock...","What'll it be?","Go on then."],
+  shootSelfBlank:["Lucky you.","Hmm. Lucky.","Not dead yet, huh?","Fortune favors you... for now."],
+  shootSelfLive:["Ouch.","There it is.","*chuckles*","That's gotta hurt."],
+  shootDealerBlank:["Click. Nothing.","Wasn't that one.","Bad luck."],
+  shootDealerLive:["Gah!","Nngh!","Tch!","Ugh!"],
+  dealerTurn:["My turn now.","Let me show you how it's done.","Watch closely.","Here we go."],
+  dealerShootSelfBlank:["Ah. Lucky me.","Still here.","Not today."],
+  dealerShootSelfLive:["Nngh...!","Gah...!","Ugh...!"],
+  dealerShootPlayer:["Say goodnight.","This one's for you.","Here it comes.","Sleep."],
+  roundStart:["Round {round}. Let's go.","Round {round}. No mercy.","Round {round}. Don't die."],
+  lowHealth:["Getting nervous?","You look pale.","Not looking good for you."],
+  dealerLowHealth:["You're tougher than you look.","Lucky shots...","This isn't over."],
+};
+
+// ===== AUDIO =====
+const AC=window.AudioContext||window.webkitAudioContext;
+let ac;
+function initAudio(){if(!ac)ac=new AC()}
+function playSound(type){
+  if(!S.audioEnabled)return;
+  initAudio();
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);
+  switch(type){
+    case 'shoot-live':
+      o.type='sawtooth';o.frequency.setValueAtTime(80,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(30,ac.currentTime+.3);
+      g.gain.setValueAtTime(.5,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.4);
+      o.start();o.stop(ac.currentTime+.4);playNoise(.25,.12);
+      break;
+    case 'shoot-blank':
+      o.type='square';o.frequency.setValueAtTime(200,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+.05);
+      g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.08);
+      o.start();o.stop(ac.currentTime+.08);
+      break;
+    case 'item':
+      o.type='sine';o.frequency.setValueAtTime(440,ac.currentTime);
+      o.frequency.setValueAtTime(660,ac.currentTime+.1);
+      g.gain.setValueAtTime(.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.2);
+      o.start();o.stop(ac.currentTime+.2);
+      break;
+    case 'heartbeat':
+      o.type='sine';o.frequency.setValueAtTime(60,ac.currentTime);
+      g.gain.setValueAtTime(0,ac.currentTime);
+      g.gain.linearRampToValueAtTime(.15,ac.currentTime+.05);
+      g.gain.linearRampToValueAtTime(0,ac.currentTime+.15);
+      g.gain.linearRampToValueAtTime(.1,ac.currentTime+.2);
+      g.gain.linearRampToValueAtTime(0,ac.currentTime+.35);
+      o.start();o.stop(ac.currentTime+.35);
+      break;
+    case 'death':
+      o.type='sawtooth';o.frequency.setValueAtTime(200,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(40,ac.currentTime+1.5);
+      g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+1.5);
+      o.start();o.stop(ac.currentTime+1.5);
+      break;
+    case 'load':
+      o.type='triangle';o.frequency.setValueAtTime(150,ac.currentTime);
+      o.frequency.setValueAtTime(200,ac.currentTime+.1);
+      g.gain.setValueAtTime(.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.2);
+      o.start();o.stop(ac.currentTime+.2);
+      break;
+  }
+}
+function playNoise(dur,vol){
+  const bs=ac.sampleRate*dur,b=ac.createBuffer(1,bs,ac.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<bs;i++)d[i]=(Math.random()*2-1)*vol;
+  const s=ac.createBufferSource();s.buffer=b;
+  const g=ac.createGain();g.gain.setValueAtTime(vol,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+dur);
+  s.connect(g);g.connect(ac.destination);s.start();
+}
+
+// Ambient drone
+let droneIv;
+function startAmbient(){stopAmbient();droneIv=setInterval(()=>{
+  if(!S.audioEnabled||S.gameOver)return;initAudio();
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type='sine';o.frequency.setValueAtTime(40+Math.random()*20,ac.currentTime);
+  g.gain.setValueAtTime(.02,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+2);
+  o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+2);
+},3000)}
+function stopAmbient(){if(droneIv)clearInterval(droneIv)}
+
+// ===== PARTICLES =====
+function createParticles(){
+  const c=document.getElementById('particles');c.innerHTML='';
+  for(let i=0;i<20;i++){
+    const d=document.createElement('div');d.className='dust';
+    d.style.left=Math.random()*100+'%';
+    d.style.animationDelay=Math.random()*8+'s';
+    d.style.animationDuration=(6+Math.random()*6)+'s';
+    c.appendChild(d);
+  }
+}
+
+// ===== UI UPDATES =====
+function updateHealth(){
+  const ph=document.getElementById('player-health'),dh=document.getElementById('dealer-health');
+  ph.innerHTML='';dh.innerHTML='';
+  for(let i=0;i<S.maxHP;i++){
+    const h=document.createElement('div');
+    h.className='heart'+(i>=S.playerHP?' empty':'');
+    ph.appendChild(h);
+  }
+  for(let i=0;i<S.maxHP;i++){
+    const h=document.createElement('div');
+    h.className='heart'+(i>=S.dealerHP?' empty':'');
+    dh.appendChild(h);
+  }
+  // Wire cutter status
+  const ws=document.getElementById('wire-status');
+  if(S.playerHP<=WIRE_CUT_THRESHOLD&&!S.wiresCut){
+    S.wiresCut=true;
+    ws.className='cut';
+    ws.textContent='WIRES CUT';
+  }
+}
+
+function updateShells(){
+  const row=document.getElementById('shells-row');row.innerHTML='';
+  const total=S.shells.length,cur=S.currentShell;
+  for(let i=0;i<total;i++){
+    const s=document.createElement('div');
+    s.className='shell unknown';
+    if(i<cur)s.style.opacity='.25';
+    s.id='shell-'+i;
+    row.appendChild(s);
+  }
+  const rem=S.shells.slice(cur);
+  const lc=rem.filter(s=>s==='live').length,bc=rem.filter(s=>s==='blank').length;
+  document.getElementById('shell-count').textContent=
+    `${total-cur} LEFT (${lc}L/${bc}B)`;
+}
+
+function updateItems(){
+  const c=document.getElementById('items-container');c.innerHTML='';
+  for(const key of Object.keys(ITEMS)){
+    const count=S.playerItems[key]||0;
+    const slot=document.createElement('div');
+    slot.className='item-slot'+(count===0?' empty':'')+(S.selectedItem===key?' selected':'');
+    slot.innerHTML=`
+      ${ITEMS[key].emoji}
+      ${count>0?`<span class="item-count">×${count}</span>`:''}
+      <span class="item-tooltip"><strong>${ITEMS[key].name}</strong><br>${ITEMS[key].desc}</span>
+    `;
+    if(count>0)slot.onclick=()=>useItem(key);
+    c.appendChild(slot);
+  }
+}
+
+function updateChargeDisplay(){
+  const cd=document.getElementById('charge-display');cd.innerHTML='';
+  const add=(emoji,label,cls)=>{
+    const s=document.createElement('span');
+    s.className='charge-indicator '+cls;
+    s.textContent=emoji+' '+label;
+    cd.appendChild(s);
+  };
+  if(S.sawActive)add('🪚','x2 DMG','saw');
+  if(S.cuffsActive)add('🔗','CUFFED','cuffs');
+  if(S.invertActive)add('🔄','INVERTED','invert');
+}
+
+function updateTurnIndicator(){
+  const ti=document.getElementById('turn-indicator');
+  if(S.isPlayerTurn){ti.textContent='YOUR TURN';ti.className='player-turn'}
+  else{ti.textContent="DEALER'S TURN";ti.className='dealer-turn'}
+}
+
+function updateButtons(){
+  const hs=S.currentShell<S.shells.length;
+  document.getElementById('btn-self').disabled=!S.isPlayerTurn||!hs||S.gameOver||S.processing;
+  document.getElementById('btn-dealer').disabled=!S.isPlayerTurn||!hs||S.gameOver||S.processing;
+}
+
+// ===== DEALER DIALOGUE =====
+function dealerSay(cat){
+  const opts=DIALOG[cat];if(!opts)return;
+  const text=opts[Math.floor(Math.random()*opts.length)].replace('{round}',S.round);
+  const d=document.getElementById('dealer-dialog');
+  d.textContent=text;d.classList.add('active');
+  document.getElementById('dealer-mouth').classList.add('wide');
+  setTimeout(()=>{
+    document.getElementById('dealer-mouth').classList.remove('wide');
+    d.classList.remove('active');
+  },1800);
+}
+
+// ===== DEALER AI =====
+function dealerUseItem(key){
+  S.dealerItems[key]--;
+  switch(key){
+    case 'healing_bottle':
+      if(S.dealerHP<S.maxHP&&S.dealerHP>WIRE_CUT_THRESHOLD){
+        S.dealerHP=Math.min(S.maxHP,S.dealerHP+1);
+        updateHealth();playSound('item');
+        showMessage('💊','The dealer heals. +1 HP',1200,null);
+      }else{S.dealerItems[key]++;return false;}
+      break;
+    case 'beer':
+      if(S.currentShell<S.shells.length){
+        S.currentShell++;
+        playSound('item');
+        showMessage('🍺','The dealer ejects a shell.',1200,null);
+      }else{S.dealerItems[key]++;return false;}
+      break;
+    case 'handsaw':
+      if(S.currentShell<S.shells.length&&S.shells[S.currentShell]==='live'){
+        S.sawActive=true;updateChargeDisplay();
+        showMessage('🪚','The dealer saws the barrel! x2 DMG',1200,null);
+      }else{S.dealerItems[key]++;return false;}
+      break;
+    case 'handcuffs':
+      if(!S.cuffsActive&&S.shells.slice(S.currentShell).length>1){
+        S.cuffsActive=true;updateChargeDisplay();
+        showMessage('🔗','The dealer cuffs you! Turn skip incoming.',1200,null);
+      }else{S.dealerItems[key]++;return false;}
+      break;
+    case 'magnifying_glass':
+      S.dealerKnowsShell=true;
+      break;
+    case 'burner_phone':
+      // Dealer peeks at a future shell
+      {const futureIdx=S.currentShell+1+Math.floor(Math.random()*Math.min(3,S.shells.length-S.currentShell-1));
+      if(futureIdx<S.shells.length){S.dealerKnowsFutureShell=futureIdx;}
+      break;}
+    case 'polarity_inverter':
+      if(S.currentShell<S.shells.length){
+        S.shells[S.currentShell]=S.shells[S.currentShell]==='live'?'blank':'live';
+        S.invertActive=true;updateChargeDisplay();
+        showMessage('🔄','The dealer inverts a shell!',1200,null);
+      }else{S.dealerItems[key]++;return false;}
+      break;
+  }
+  return true;
+}
+
+function dealerDecide(){
+  const rem=S.shells.slice(S.currentShell);
+  const lc=rem.filter(s=>s==='live').length;
+  const bc=rem.filter(s=>s==='blank').length;
+  const total=rem.length;
+  const curIsLive=S.shells[S.currentShell]==='live';
+
+  // Dealer item usage priority
+  // 1. Healing if low HP and wires not cut
+  if(S.dealerHP<=2&&S.dealerHP>WIRE_CUT_THRESHOLD&&(S.dealerItems.healing_bottle||0)>0){
+    dealerSay('dealerTurn');
+    if(dealerUseItem('healing_bottle')){
+      updateShells();
+      setTimeout(()=>dealerContinueTurn(),1500);return;
+    }
+  }
+
+  // 2. Handcuffs if player has more health
+  if((S.dealerItems.handcuffs||0)>0&&S.dealerHP<S.playerHP&&!S.cuffsActive&&total>2){
+    dealerSay('dealerTurn');
+    if(dealerUseItem('handcuffs')){
+      updateShells();
+      setTimeout(()=>dealerContinueTurn(),1500);return;
+    }
+  }
+
+  // 3. Magnifying glass to peek
+  if((S.dealerItems.magnifying_glass||0)>0&&!S.dealerKnowsShell){
+    dealerUseItem('magnifying_glass');
+  }
+
+  // 4. Polarity inverter if current is blank and player HP is high
+  if((S.dealerItems.polarity_inverter||0)>0&&!curIsLive&&S.playerHP>=3){
+    dealerSay('dealerTurn');
+    if(dealerUseItem('polarity_inverter')){
+      setTimeout(()=>dealerContinueTurn(),1500);return;
+    }
+  }
+
+  // 5. Beer to eject if current is live and dealer is low
+  if((S.dealerItems.beer||0)>0&&curIsLive&&S.dealerHP<=2){
+    dealerSay('dealerTurn');
+    if(dealerUseItem('beer')){
+      updateShells();
+      setTimeout(()=>dealerContinueTurn(),1500);return;
+    }
+  }
+
+  // 6. Handsaw if current is live and player HP is high
+  if((S.dealerItems.handsaw||0)>0&&curIsLive&&S.playerHP>=3){
+    dealerSay('dealerTurn');
+    if(dealerUseItem('handsaw')){
+      // Dealer will shoot player with double damage
+      setTimeout(()=>dealerShootPlayer(),1500);return;
+    }
+  }
+
+  // 7. Burner phone for future info
+  if((S.dealerItems.burner_phone||0)>0&&S.dealerKnowsFutureShell<0&&total>2){
+    dealerUseItem('burner_phone');
+  }
+
+  // Decision: shoot self or shoot player
+  if(curIsLive){
+    // Current is live — dealer prefers to shoot player
+    const confidence=S.dealerKnowsShell?0.95:0.7;
+    if(Math.random()<confidence){
+      dealerShootPlayer();
+    }else{
+      dealerShootSelf();
+    }
+  }else{
+    // Current is blank — dealer shoots self for extra turn
+    dealerShootSelf();
+  }
+}
+
+function dealerShootSelf(){
+  const isLive=S.shells[S.currentShell]==='live';
+  S.currentShell++;
+  animateShot('dealer',isLive,()=>{
+    if(isLive){
+      const dmg=S.sawActive?2:1;
+      S.dealerHP=Math.max(0,S.dealerHP-dmg);
+      S.sawActive=false;S.invertActive=false;
+      updateChargeDisplay();updateHealth();
+      playSound('shoot-live');screenShake();
+      dealerSay('dealerShootSelfLive');
+      showDealerDamage();
+      if(S.dealerHP<=0){endRound(true);return}
+      S.isPlayerTurn=true;updateTurnIndicator();updateButtons();
+      dealerSay('playerTurn');
+    }else{
+      playSound('shoot-blank');
+      dealerSay('dealerShootSelfBlank');
+      updateShells();
+      if(S.currentShell>=S.shells.length){reloadShells();return}
+      setTimeout(()=>dealerDecide(),1000);
+    }
+    updateShells();
+  });
+}
+
+function dealerShootPlayer(){
+  const isLive=S.shells[S.currentShell]==='live';
+  S.currentShell++;
+  animateShot('player',isLive,()=>{
+    if(isLive){
+      const dmg=S.sawActive?2:1;
+      S.playerHP=Math.max(0,S.playerHP-dmg);
+      S.sawActive=false;S.invertActive=false;
+      updateChargeDisplay();updateHealth();
+      playSound('shoot-live');screenShake();
+      dealerSay('shootDealerLive');
+      addBloodStreak();
+      if(S.playerHP<=0){endRound(false);return}
+    }else{
+      playSound('shoot-blank');
+      dealerSay('shootDealerBlank');
+    }
+    updateShells();
+    if(S.currentShell>=S.shells.length){reloadShells();return}
+    if(S.cuffsActive){
+      S.cuffsActive=false;updateChargeDisplay();
+      showMessage('🔗','You are cuffed! Turn skipped.',1200,()=>{
+        S.isPlayerTurn=false;updateTurnIndicator();updateButtons();
+        setTimeout(()=>dealerDecide(),800);
+      });
+    }else{
+      S.isPlayerTurn=true;updateTurnIndicator();updateButtons();
+      dealerSay('playerTurn');
+    }
+  });
+}
+
+function dealerContinueTurn(){
+  updateShells();
+  if(S.currentShell>=S.shells.length){reloadShells();return}
+  setTimeout(()=>dealerDecide(),600);
+}
+
+// ===== SHOOTING =====
+function shootSelf(){
+  if(!S.isPlayerTurn||S.gameOver||S.processing)return;
+  if(S.currentShell>=S.shells.length)return;
+  S.processing=true;updateButtons();
+
+  const isLive=S.shells[S.currentShell]==='live';
+  S.currentShell++;
+  animateShot('player',isLive,()=>{
+    S.processing=false;
+    if(isLive){
+      const dmg=S.sawActive?2:1;
+      S.playerHP=Math.max(0,S.playerHP-dmg);
+      S.sawActive=false;S.invertActive=false;
+      updateChargeDisplay();updateHealth();
+      playSound('shoot-live');screenShake();
+      dealerSay('shootSelfLive');
+      addBloodStreak();
+      if(S.playerHP<=0){endRound(false);return}
+      S.isPlayerTurn=false;updateTurnIndicator();updateButtons();
+      setTimeout(()=>dealerDecide(),1000);
+    }else{
+      playSound('shoot-blank');
+      dealerSay('shootSelfBlank');
+      updateShells();
+      if(S.currentShell>=S.shells.length){reloadShells();return}
+      updateButtons();
+    }
+  });
+}
+
+function shootDealer(){
+  if(!S.isPlayerTurn||S.gameOver||S.processing)return;
+  if(S.currentShell>=S.shells.length)return;
+  S.processing=true;updateButtons();
+
+  const isLive=S.shells[S.currentShell]==='live';
+  S.currentShell++;
+  animateShot('dealer',isLive,()=>{
+    S.processing=false;
+    if(isLive){
+      const dmg=S.sawActive?2:1;
+      S.dealerHP=Math.max(0,S.dealerHP-dmg);
+      S.sawActive=false;S.invertActive=false;
+      updateChargeDisplay();updateHealth();
+      playSound('shoot-live');screenShake();
+      dealerSay('shootDealerLive');
+      showDealerDamage();
+      if(S.dealerHP<=0){endRound(true);return}
+    }else{
+      playSound('shoot-blank');
+      dealerSay('shootDealerBlank');
+    }
+    updateShells();
+    if(S.currentShell>=S.shells.length){reloadShells();return}
+    S.isPlayerTurn=false;updateTurnIndicator();updateButtons();
+    setTimeout(()=>dealerDecide(),1000);
+  });
+}
+
+// ===== ANIMATIONS =====
+function animateShot(target,isLive,cb){
+  const sg=document.getElementById('shotgun');
+  if(target==='player'){
+    sg.classList.add('at-self');sg.classList.remove('at-dealer');
+    sg.style.setProperty('--rg','-25deg');
+  }else{
+    sg.classList.add('at-dealer');sg.classList.remove('at-self');
+    sg.style.setProperty('--rg','25deg');
+  }
+  setTimeout(()=>{
+    sg.classList.add('firing');
+    document.getElementById('muzzle-flash').classList.add('active');
+    setTimeout(()=>{
+      sg.classList.remove('firing');
+      document.getElementById('muzzle-flash').classList.remove('active');
+      cb();
+    },250);
+  },300);
+}
+
+function screenShake(){
+  document.body.classList.add('screen-shake');
+  setTimeout(()=>document.body.classList.remove('screen-shake'),400);
+}
+
+function showDealerDamage(){
+  document.getElementById('dealer-head').classList.add('damaged');
+  document.querySelectorAll('.blood-splatter').forEach(b=>b.classList.add('active'));
+  if(S.dealerHP<=2){
+    document.getElementById('dealer-eye-l').classList.add('dead-eye');
+    document.getElementById('dealer-eye-r').classList.add('dead-eye');
+  }
+}
+
+function addBloodStreak(){
+  const s=document.createElement('div');s.className='blood-streak';
+  s.style.left=(20+Math.random()*60)+'%';s.style.top='0';
+  document.body.appendChild(s);setTimeout(()=>s.remove(),1500);
+}
+
+// ===== ITEMS =====
+function useItem(key){
+  if(!S.isPlayerTurn||S.gameOver||S.processing)return;
+  if(!S.playerItems[key]||S.playerItems[key]<=0)return;
+
+  S.playerItems[key]--;
+  playSound('item');
+  document.querySelectorAll('.item-slot').forEach(s=>s.classList.remove('using'));
+  const slots=document.querySelectorAll('.item-slot');
+  slots.forEach(s=>s.classList.add('using'));
+  setTimeout(()=>slots.forEach(s=>s.classList.remove('using')),300);
+
+  switch(key){
+    case 'magnifying_glass':peekShell();break;
+    case 'healing_bottle':useHealing();break;
+    case 'beer':drinkBeer();break;
+    case 'handsaw':useHandsaw();break;
+    case 'handcuffs':useHandcuffs();break;
+    case 'adrenaline':useAdrenaline();break;
+    case 'burner_phone':useBurnerPhone();break;
+    case 'polarity_inverter':usePolarityInverter();break;
+  }
+  updateItems();
+  updateChargeDisplay();
+}
+
+function peekShell(){
+  if(S.currentShell>=S.shells.length)return;
+  const sh=S.shells[S.currentShell];
+  const el=document.getElementById('shell-'+S.currentShell);
+  if(el)el.className='shell '+sh+' revealing';
+  showMessage('🔍','Next shell: '+sh.toUpperCase(),1800,null);
+}
+
+function useHealing(){
+  if(S.wiresCut){
+    S.playerItems.healing_bottle++;
+    showMessage('💊','Wires are cut! Cannot heal.',1500,null);
+    updateItems();return;
+  }
+  if(S.playerHP>=S.maxHP){
+    S.playerItems.healing_bottle++;
+    showMessage('💊','Already at full HP.',1500,null);
+    updateItems();return;
+  }
+  S.playerHP=Math.min(S.maxHP,S.playerHP+1);
+  S.wiresCut=false;
+  updateHealth();playSound('heartbeat');
+  showMessage('💊','+1 HP restored!',1200,null);
+}
+
+function drinkBeer(){
+  if(S.currentShell>=S.shells.length)return;
+  const ej=S.shells[S.currentShell];
+  S.currentShell++;
+  const el=document.getElementById('shell-'+(S.currentShell-1));
+  if(el)el.classList.add('flying');
+  showMessage('🍺','Ejected '+ej.toUpperCase()+' shell!',1200,()=>updateShells());
+}
+
+function useHandsaw(){
+  S.sawActive=true;
+  showMessage('🪚','Barrel sawed! x2 damage next shot.',1500,null);
+}
+
+function useHandcuffs(){
+  S.cuffsActive=true;
+  showMessage('🔗',"Dealer's next turn skipped!",1500,null);
+}
+
+function useAdrenaline(){
+  const dk=Object.keys(S.dealerItems).filter(k=>S.dealerItems[k]>0);
+  if(dk.length===0){
+    S.playerItems.adrenaline++;
+    showMessage('💉','Dealer has no items!',1500,null);
+    updateItems();return;
+  }
+  const stolen=dk[Math.floor(Math.random()*dk.length)];
+  S.dealerItems[stolen]--;
+  S.playerItems[stolen]=(S.playerItems[stolen]||0)+1;
+  showMessage('💉','Stole '+ITEMS[stolen].emoji+' '+ITEMS[stolen].name+'!',1800,()=>{
+    S.playerItems[stolen]--;
+    switch(stolen){
+      case 'magnifying_glass':peekShell();break;
+      case 'healing_bottle':useHealing();break;
+      case 'beer':drinkBeer();break;
+      case 'handsaw':useHandsaw();break;
+      case 'handcuffs':useHandcuffs();break;
+      case 'burner_phone':useBurnerPhone();break;
+      case 'polarity_inverter':usePolarityInverter();break;
+      case 'adrenaline':useAdrenaline();break;
+    }
+    updateItems();
+  });
+}
+
+function useBurnerPhone(){
+  // Reveal a future shell (not the current one)
+  const futureIdx=S.currentShell+1+Math.floor(Math.random()*Math.min(3,S.shells.length-S.currentShell-1));
+  if(futureIdx>=S.shells.length){
+    showMessage('📱','No future shells to reveal.',1500,null);
+    return;
+  }
+  const sh=S.shells[futureIdx];
+  const el=document.getElementById('shell-'+futureIdx);
+  if(el)el.className='shell '+sh+' revealing';
+  showMessage('📱','Shell #'+(futureIdx-S.currentShell)+' from now: '+sh.toUpperCase(),2200,null);
+}
+
+function usePolarityInverter(){
+  if(S.currentShell>=S.shells.length)return;
+  S.shells[S.currentShell]=S.shells[S.currentShell]==='live'?'blank':'live';
+  S.invertActive=true;
+  showMessage('🔄','Shell flipped! Live↔Blank',1500,null);
+}
+
+// ===== RELOAD =====
+function reloadShells(){
+  const rc=ROUNDS[S.round-1];
+  const shells=[];
+  for(let i=0;i<rc.live;i++)shells.push('live');
+  for(let i=0;i<rc.blank;i++)shells.push('blank');
+  for(let i=shells.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [shells[i],shells[j]]=[shells[j],shells[i]];
+  }
+  S.shells=shells;S.currentShell=0;
+  S.dealerKnowsShell=false;S.dealerKnowsFutureShell=-1;
+  playSound('load');
+  showMessage('🔄','Reloading...',800,()=>updateShells());
+}
+
+// ===== MESSAGES =====
+function showMessage(title,sub,dur,cb){
+  const ov=document.getElementById('message-overlay');
+  document.getElementById('message-text').textContent=title;
+  document.getElementById('message-sub').textContent=sub;
+  ov.classList.add('active');
+  setTimeout(()=>{
+    ov.classList.remove('active');
+    if(cb)cb();
+  },dur);
+}
+
+// ===== ROUND MANAGEMENT =====
+function startRound(){
+  const rc=ROUNDS[S.round-1];
+  S.playerHP=rc.playerHP;S.dealerHP=rc.maxHP;
+  S.maxHP=rc.playerHP;
+  S.sawActive=false;S.cuffsActive=false;S.invertActive=false;
+  S.wiresCut=false;S.adrenalineUsed=false;
+  S.dealerKnowsShell=false;S.dealerKnowsFutureShell=-1;
+  S.selectedItem=null;S.processing=false;
+
+  // Reset dealer visuals
+  document.getElementById('dealer-head').classList.remove('damaged');
+  document.querySelectorAll('.blood-splatter').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dealer-eye-l').classList.remove('dead-eye');
+  document.getElementById('dealer-eye-r').classList.remove('dead-eye');
+  document.getElementById('wire-status').className='ok';
+  document.getElementById('wire-status').textContent='WIRES OK';
+
+  // Give items
+  S.playerItems={};S.dealerItems={};
+  if(S.round===1){
+    // No items in round 1
+  }else if(S.round===2){
+    // Random 2 items from pool
+    const pool=[...ROUND2_POOL];
+    for(let i=0;i<2;i++){
+      if(pool.length===0)break;
+      const idx=Math.floor(Math.random()*pool.length);
+      const item=pool.splice(idx,1)[0];
+      S.playerItems[item]=(S.playerItems[item]||0)+1;
+      S.dealerItems[item]=(S.dealerItems[item]||0)+1;
+    }
+  }else{
+    // Round 3: all items (1 each)
+    for(const[k,v]of Object.entries(rc.items)){
+      S.playerItems[k]=v;S.dealerItems[k]=v;
+    }
+  }
+
+  // Round transition
+  const rt=document.getElementById('round-transition');
+  document.getElementById('round-title-text').textContent='ROUND '+S.round;
+  const names=['PURE PROBABILITY','ITEMS ARRIVE','ALL IN'];
+  document.getElementById('round-sub-text').textContent=names[S.round-1];
+  rt.classList.add('active');
+  setTimeout(()=>{
+    rt.classList.remove('active');
+    updateAll();
+    reloadShells();
+    S.isPlayerTurn=true;updateTurnIndicator();updateButtons();
+    dealerSay('roundStart');
+  },2000);
+}
+
+function endRound(playerWon){
+  S.gameOver=true;
+  if(playerWon){
+    if(S.round>=3){
+      setTimeout(()=>{
+        document.getElementById('go-title').textContent='YOU WON';
+        document.getElementById('go-title').className='go-title won';
+        document.getElementById('go-sub').textContent='Against all odds, you survived all 3 rounds. The dealer is done.';
+        document.getElementById('game-over').classList.add('active');
+      },1200);
+    }else{
+      S.round++;
+      setTimeout(()=>{S.gameOver=false;startRound();},1200);
+    }
+  }else{
+    playSound('death');
+    setTimeout(()=>{
+      document.getElementById('go-title').textContent='YOU DIED';
+      document.getElementById('go-title').className='go-title dead';
+      document.getElementById('go-sub').textContent='The dealer smiles. Another soul collected.';
+      document.getElementById('game-over').classList.add('active');
+    },1200);
+  }
+}
+
+function updateAll(){
+  updateHealth();updateShells();updateItems();
+  updateChargeDisplay();updateTurnIndicator();updateButtons();
+  document.getElementById('round-num').textContent=S.round;
+}
+
+// ===== GAME FLOW =====
+function startGame(){
+  document.getElementById('title-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  createParticles();startAmbient();
+  S.round=1;S.gameOver=false;startRound();
+}
+
+function restartGame(){
+  document.getElementById('game-over').classList.remove('active');
+  S.round=1;S.gameOver=false;startRound();
+}
+
+// ===== EVENTS =====
+document.getElementById('title-screen').onclick=startGame;
+
+function toggleRules(){document.getElementById('rules-panel').classList.toggle('active')}
+function closeRules(){document.getElementById('rules-panel').classList.remove('active')}
+function toggleAudio(){S.audioEnabled=!S.audioEnabled;if(S.audioEnabled)startAmbient();else stopAmbient()}
+
+document.addEventListener('keydown',e=>{
+  if(S.gameOver)return;
+  if(e.key==='1'||e.key==='s')shootSelf();
+  if(e.key==='2'||e.key==='d')shootDealer();
+  if(e.key==='r')toggleRules();
+});
+</script>
+</body>
+</html>
