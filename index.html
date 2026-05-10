@@ -8,12 +8,12 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --blood:#8b0000;--blood-bright:#cc0000;--blood-dark:#4a0000;
-  --rust:#8b4513;--rust-dark:#5c2d0e;--metal:#3a3a3a;
+  --rust:#8b4513;--rust-dark:#5c2d0e;
   --skin:#c4956a;--skin-dark:#8b6d4f;--gold:#c5a000;
-  --black:#0a0a0a;--dark:#1a1a1a;--green:#4a8a4a;
+  --black:#0a0a0a;--green:#4a8a4a;
 }
 body{
-  background:#0a0a0a;color:var(--skin);font-family:'Courier New',monospace;
+  background:#050302;color:var(--skin);font-family:'Courier New',monospace;
   overflow:hidden;height:100vh;width:100vw;cursor:default;user-select:none;
   -webkit-user-select:none;
 }
@@ -21,23 +21,55 @@ body{
 /* ===== SCREEN SHAKE ===== */
 @keyframes shake{
   0%,100%{transform:translate(0,0)}
-  10%{transform:translate(-6px,-4px)}
-  20%{transform:translate(6px,4px)}
-  30%{transform:translate(-4px,6px)}
-  40%{transform:translate(4px,-6px)}
-  50%{transform:translate(-6px,4px)}
-  60%{transform:translate(6px,-4px)}
-  70%{transform:translate(-4px,-6px)}
-  80%{transform:translate(4px,6px)}
-  90%{transform:translate(-6px,-4px)}
+  10%{transform:translate(-8px,-5px) rotate(-.5deg)}
+  20%{transform:translate(8px,5px) rotate(.5deg)}
+  30%{transform:translate(-5px,8px) rotate(-.3deg)}
+  40%{transform:translate(5px,-8px) rotate(.3deg)}
+  50%{transform:translate(-8px,5px) rotate(-.5deg)}
+  60%{transform:translate(8px,-5px) rotate(.5deg)}
+  70%{transform:translate(-5px,-8px) rotate(-.3deg)}
+  80%{transform:translate(5px,8px) rotate(.3deg)}
+  90%{transform:translate(-8px,-5px) rotate(-.5deg)}
 }
-.screen-shake{animation:shake .4s ease-in-out}
+.screen-shake{animation:shake .5s ease-in-out}
 
-/* ===== FLICKER ===== */
-@keyframes flicker{
-  0%,100%{opacity:1}5%{opacity:.85}10%{opacity:1}50%{opacity:1}
-  52%{opacity:.7}54%{opacity:1}80%{opacity:1}82%{opacity:.8}83%{opacity:1}
+/* ===== LIGHT FLICKER ===== */
+@keyframes lightFlicker{
+  0%,100%{opacity:1}
+  3%{opacity:.4}6%{opacity:.9}9%{opacity:.3}12%{opacity:1}
+  50%{opacity:1}52%{opacity:.2}54%{opacity:.8}56%{opacity:.4}58%{opacity:1}
+  80%{opacity:1}82%{opacity:.6}84%{opacity:1}
 }
+.light-flicker{animation:lightFlicker 8s infinite}
+
+/* ===== VIGNETTE PULSE (heartbeat) ===== */
+@keyframes vignettePulse{
+  0%,100%{box-shadow:inset 0 0 80px 20px rgba(0,0,0,.85)}
+  5%{box-shadow:inset 0 0 100px 30px rgba(80,0,0,.9)}
+  10%{box-shadow:inset 0 0 80px 20px rgba(0,0,0,.85)}
+  15%{box-shadow:inset 0 0 90px 25px rgba(60,0,0,.88)}
+  20%{box-shadow:inset 0 0 80px 20px rgba(0,0,0,.85)}
+}
+.vignette-pulse{animation:vignettePulse 1.2s infinite}
+
+/* ===== CHROMATIC ABERRATION on damage ===== */
+@keyframes chromatic{
+  0%{text-shadow:none;filter:none}
+  10%{filter:drop-shadow(2px 0 0 rgba(255,0,0,.5)) drop-shadow(-2px 0 0 rgba(0,255,255,.3))}
+  20%{filter:drop-shadow(-2px 0 0 rgba(255,0,0,.5)) drop-shadow(2px 0 0 rgba(0,255,255,.3))}
+  30%{filter:drop-shadow(3px 0 0 rgba(255,0,0,.4)) drop-shadow(-1px 0 0 rgba(0,255,255,.2))}
+  100%{filter:none}
+}
+.chromatic{animation:chromatic .6s ease-out}
+
+/* ===== GLITCH ===== */
+@keyframes glitch{
+  0%,100%{clip-path:none;transform:none}
+  2%{clip-path:inset(20% 0 60% 0);transform:translate(-3px,1px);filter:hue-rotate(90deg)}
+  4%{clip-path:inset(50% 0 20% 0);transform:translate(3px,-1px);filter:hue-rotate(0deg)}
+  6%{clip-path:none;transform:none}
+}
+.glitch{animation:glitch .3s ease-out}
 
 /* ===== TITLE SCREEN ===== */
 #title-screen{
@@ -46,44 +78,85 @@ body{
   background:radial-gradient(ellipse at center,#1a0a0a 0%,#0a0505 50%,#000 100%);
   z-index:100;cursor:pointer;
 }
+#title-screen::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);
+  animation:scanlines 8s linear infinite;
+}
+@keyframes scanlines{0%{transform:translateY(0)}100%{transform:translateY(4px)}}
 #title-screen .title{
   font-size:clamp(2rem,8vw,4rem);color:var(--blood-bright);
-  text-shadow:0 0 20px var(--blood),0 0 40px var(--blood-dark);
+  text-shadow:0 0 20px var(--blood),0 0 40px var(--blood-dark),0 0 80px rgba(100,0,0,.3);
   letter-spacing:.1em;animation:flicker 4s infinite;
   text-align:center;line-height:1.3;margin-bottom:.5rem;
+  position:relative;z-index:2;
+}
+@keyframes flicker{
+  0%,100%{opacity:1}
+  5%{opacity:.7}10%{opacity:1}15%{opacity:.85}20%{opacity:1}
+  50%{opacity:1}52%{opacity:.5}54%{opacity:1}
+  80%{opacity:1}82%{opacity:.6}84%{opacity:1}
 }
 #title-screen .subtitle{
   font-size:clamp(.8rem,3vw,1.5rem);color:var(--rust);
   letter-spacing:.3em;text-shadow:0 0 10px var(--rust-dark);margin-bottom:2rem;
+  position:relative;z-index:2;
 }
 #title-screen .click-prompt{
   font-size:clamp(.7rem,2.5vw,1rem);color:var(--skin-dark);
   animation:pulse 2s infinite;letter-spacing:.15em;
+  position:relative;z-index:2;
 }
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 
 .blood-drip{
   position:absolute;top:0;width:2px;
-  background:linear-gradient(to bottom,var(--blood-bright),transparent);
-  animation:drip 3s ease-in infinite;opacity:.5;
+  background:linear-gradient(to bottom,var(--blood-bright),var(--blood),transparent);
+  animation:drip 3s ease-in infinite;opacity:.6;
 }
-@keyframes drip{0%{height:0;opacity:0}20%{opacity:.5}100%{height:120px;opacity:0}}
+@keyframes drip{0%{height:0;opacity:0}20%{opacity:.6}100%{height:150px;opacity:0}}
 
 /* ===== GAME SCREEN ===== */
 #game-screen{
   display:none;position:fixed;inset:0;
-  background:radial-gradient(ellipse at 50% 30%,#1a0f0a 0%,#0d0805 40%,#050302 100%);
-  flex-direction:column;align-items:center;
+  background:#050302;flex-direction:column;align-items:center;
+}
+
+/* ===== AMBIENT LAYER ===== */
+#ambient-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:90;
+  background:radial-gradient(ellipse at 50% 35%,rgba(20,10,5,.3) 0%,rgba(5,2,0,.7) 60%,#000 100%);
+  transition:background 2s;
+}
+#ambient-layer.danger{
+  background:radial-gradient(ellipse at 50% 35%,rgba(40,5,0,.4) 0%,rgba(10,2,0,.8) 60%,#000 100%);
+}
+#vignette-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:91;
+  transition:box-shadow .3s;
+}
+#scanline-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:92;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);
+  opacity:.4;
+}
+#flicker-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:93;
+  background:transparent;transition:background .05s;
+}
+#flicker-overlay.flicker{
+  background:rgba(255,255,255,.03);
 }
 
 /* ===== STATUS BAR ===== */
 #status-bar{
   display:flex;justify-content:space-between;align-items:center;
   width:100%;padding:4px 8px;
-  background:linear-gradient(to bottom,rgba(30,15,10,.9),rgba(20,10,5,.7));
-  border-bottom:2px solid var(--rust-dark);
+  background:linear-gradient(to bottom,rgba(20,10,5,.95),rgba(10,5,2,.9));
+  border-bottom:1px solid var(--rust-dark);
   font-size:.7rem;color:var(--skin-dark);
   text-transform:uppercase;letter-spacing:.1em;flex-shrink:0;
+  position:relative;z-index:50;
 }
 #round-display{color:var(--gold);font-weight:bold}
 #round-display span{color:var(--blood-bright)}
@@ -97,47 +170,53 @@ body{
   content:'';position:absolute;top:0;left:7px;
   width:8px;height:12px;background:var(--blood-bright);
   border-radius:8px 8px 0 0;transform:rotate(-45deg);transform-origin:0 100%;
-  box-shadow:0 0 4px var(--blood);
+  box-shadow:0 0 6px var(--blood),0 0 12px rgba(139,0,0,.4);
 }
 .heart::after{left:0;transform:rotate(45deg);transform-origin:100% 100%}
-.heart.empty::before,.heart.empty::after{background:#2a1515;box-shadow:none}
-.heart.lost{animation:heartBreak .4s ease-out}
-@keyframes heartBreak{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+.heart.empty::before,.heart.empty::after{
+  background:#1a0808;box-shadow:inset 0 0 3px rgba(80,0,0,.5);
+}
+.heart.lost{animation:heartBreak .5s ease-out}
+@keyframes heartBreak{
+  0%{transform:scale(1)}
+  15%{transform:scale(1.6) rotate(5deg)}
+  30%{transform:scale(.8) rotate(-3deg)}
+  50%{transform:scale(1.2)}
+  100%{transform:scale(1)}
+}
 
-/* wire cutter indicator */
 #wire-status{
   font-size:.6rem;padding:2px 6px;border-radius:3px;letter-spacing:.05em;
+  transition:all .5s;
 }
 #wire-status.ok{background:rgba(0,50,0,.4);color:#4a8a4a;border:1px solid #0a3a0a}
-#wire-status.cut{background:rgba(50,0,0,.4);color:var(--blood-bright);border:1px solid var(--blood-dark)}
+#wire-status.cut{
+  background:rgba(80,0,0,.5);color:var(--blood-bright);
+  border:1px solid var(--blood-dark);
+  animation:wireCutPulse 1s infinite;
+}
+@keyframes wireCutPulse{0%,100%{box-shadow:0 0 5px var(--blood)}50%{box-shadow:0 0 15px var(--blood)}}
 
 /* ===== MAIN AREA ===== */
 #main-area{
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;width:100%;padding:4px 8px;overflow:hidden;
-  position:relative;
+  position:relative;z-index:10;
 }
 
-/* ===== TABLE ===== */
-#table{
-  width:92%;max-width:500px;min-height:100px;
-  background:radial-gradient(ellipse at 50% 50%,#2a1a0a 0%,#1a0f05 60%,#0d0803 100%);
-  border:3px solid var(--rust-dark);border-radius:50%;
-  box-shadow:inset 0 0 40px rgba(0,0,0,.8),0 0 20px rgba(139,69,19,.15);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;flex-shrink:0;
+/* ===== DEALER CANVAS ===== */
+#dealer-canvas{
+  position:absolute;top:-140px;left:50%;transform:translateX(-50%);
+  z-index:5;pointer-events:none;
 }
 
-/* ===== DEALER ===== */
-#dealer{
-  position:absolute;top:-100px;display:flex;flex-direction:column;align-items:center;z-index:5;
-}
 #dealer-dialog{
-  position:absolute;bottom:110px;left:50%;transform:translateX(-50%);
-  background:rgba(10,5,2,.9);border:1px solid var(--rust-dark);
-  padding:4px 10px;border-radius:6px;font-size:.65rem;
+  position:absolute;bottom:140px;left:50%;transform:translateX(-50%);
+  background:rgba(8,4,2,.92);border:1px solid var(--rust-dark);
+  padding:5px 12px;border-radius:4px;font-size:.65rem;
   color:var(--skin);white-space:nowrap;opacity:0;transition:opacity .3s;
   z-index:20;max-width:220px;text-align:center;
+  text-shadow:0 0 8px rgba(139,0,0,.3);
 }
 #dealer-dialog.active{opacity:1}
 #dealer-dialog::after{
@@ -145,57 +224,21 @@ body{
   border-left:6px solid transparent;border-right:6px solid transparent;
   border-top:6px solid var(--rust-dark);
 }
-#dealer-body{width:80px;height:100px;position:relative}
-.dealer-head{
-  width:50px;height:56px;background:linear-gradient(135deg,var(--skin),var(--skin-dark));
-  border-radius:50% 50% 45% 45%;position:relative;margin:0 auto;
-  box-shadow:inset -3px -3px 10px rgba(0,0,0,.3);
-}
-.dealer-hat{
-  width:58px;height:18px;background:linear-gradient(to bottom,#2a2a2a,#1a1a1a);
-  border-radius:50% 50% 0 0;position:absolute;top:-3px;left:50%;transform:translateX(-50%);z-index:2;
-}
-.dealer-hat::after{
-  content:'';position:absolute;bottom:-6px;left:-6px;right:-6px;height:8px;background:#1a1a1a;border-radius:2px;
-}
-.dealer-eyes{position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px}
-.dealer-eye{width:9px;height:10px;background:#fff;border-radius:50%;position:relative;overflow:hidden;animation:blink 4s infinite}
-.dealer-eye::after{
-  content:'';position:absolute;width:5px;height:5px;background:#1a0a00;border-radius:50%;
-  top:50%;left:50%;transform:translate(-50%,-50%);transition:all .3s;
-}
-.dealer-eye.squinting{height:3px;margin-top:4px}
-.dead-eye{background:#3a1a1a!important}
-.dead-eye::after{background:#1a0505!important}
-@keyframes blink{0%,90%,100%{height:10px}95%{height:2px;margin-top:4px}}
 
-.dealer-mouth{
-  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
-  width:18px;height:7px;border-bottom:2px solid #5a3020;border-radius:0 0 50% 50%;transition:all .3s;
+/* ===== TABLE ===== */
+#table{
+  width:92%;max-width:500px;min-height:100px;
+  background:radial-gradient(ellipse at 50% 50%,#2a1a0a 0%,#1a0f05 60%,#0d0803 100%);
+  border:3px solid var(--rust-dark);border-radius:50%;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.8),0 0 20px rgba(139,69,19,.15),0 0 60px rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;flex-shrink:0;
 }
-.dealer-mouth.wide{width:25px;height:10px;background:#2a0a0a;border:none;border-radius:0 0 50% 50%}
-.dealer-mouth.wide::after{
-  content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
-  width:10px;height:3px;background:#cc4444;border-radius:0 0 50% 50%;
+#table::before{
+  content:'';position:absolute;inset:8%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse at 30% 40%,rgba(80,0,0,.06) 0%,transparent 50%),
+             radial-gradient(ellipse at 70% 60%,rgba(60,0,0,.04) 0%,transparent 40%);
 }
-.dealer-torso{
-  width:56px;height:48px;background:linear-gradient(to bottom,#1a1a1a,#0d0d0d);
-  margin:-3px auto 0;border-radius:8px 8px 0 0;position:relative;
-  animation:breathe 3s ease-in-out infinite;transform-origin:bottom;
-}
-.dealer-torso::before{
-  content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);
-  width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:14px solid var(--skin);
-}
-@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.02)}}
-
-.blood-splatter{
-  position:absolute;width:20px;height:20px;
-  background:radial-gradient(circle,var(--blood-bright) 0%,transparent 70%);
-  border-radius:50%;opacity:0;transition:opacity .3s;
-}
-.blood-splatter.active{opacity:.6}
-#blood-l{top:14px;left:-4px}#blood-r{top:14px;right:-4px}#blood-c{top:28px;left:50%;transform:translateX(-50%)}
 
 /* ===== SHOTGUN ===== */
 #shotgun-container{position:absolute;z-index:10;transition:all .3s;cursor:pointer}
@@ -210,13 +253,13 @@ body{
 @keyframes gunFire{0%{transform:rotate(var(--rg,0deg)) translateY(0)}50%{transform:rotate(var(--rg,0deg)) translateY(-10px)}100%{transform:rotate(var(--rg,0deg)) translateY(0)}}
 
 #muzzle-flash{
-  position:absolute;width:50px;height:50px;
-  background:radial-gradient(circle,#fff 0%,#ffaa00 20%,#ff4400 40%,transparent 70%);
-  border-radius:50%;left:-30px;top:50%;transform:translateY(-50%);
+  position:absolute;width:60px;height:60px;
+  background:radial-gradient(circle,#fff 0%,#ffcc00 15%,#ff6600 35%,#ff0000 50%,transparent 70%);
+  border-radius:50%;left:-35px;top:50%;transform:translateY(-50%);
   opacity:0;pointer-events:none;z-index:20;
 }
-#muzzle-flash.active{animation:flash .12s ease-out}
-@keyframes flash{0%{opacity:1;transform:translateY(-50%) scale(.4)}100%{opacity:0;transform:translateY(-50%) scale(1.2)}}
+#muzzle-flash.active{animation:flash .15s ease-out}
+@keyframes flash{0%{opacity:1;transform:translateY(-50%) scale(.3)}100%{opacity:0;transform:translateY(-50%) scale(1.5)}}
 
 /* ===== SHELLS ===== */
 #shells-display{
@@ -246,33 +289,43 @@ body{
 #turn-indicator{
   font-size:.75rem;letter-spacing:.1em;padding:3px 12px;
   border-radius:3px;text-align:center;z-index:15;margin-top:4px;
+  transition:all .3s;
 }
-#turn-indicator.player-turn{color:var(--green);background:rgba(10,30,10,.5);border:1px solid #0a3a0a}
-#turn-indicator.dealer-turn{color:var(--blood-bright);background:rgba(30,10,10,.5);border:1px solid var(--blood-dark)}
+#turn-indicator.player-turn{
+  color:var(--green);background:rgba(10,30,10,.5);border:1px solid #0a3a0a;
+  text-shadow:0 0 8px rgba(0,100,0,.3);
+}
+#turn-indicator.dealer-turn{
+  color:var(--blood-bright);background:rgba(40,5,5,.5);border:1px solid var(--blood-dark);
+  text-shadow:0 0 8px rgba(139,0,0,.4);
+  animation:dealerTurnPulse 1.5s infinite;
+}
+@keyframes dealerTurnPulse{0%,100%{box-shadow:0 0 5px rgba(139,0,0,.2)}50%{box-shadow:0 0 15px rgba(139,0,0,.4)}}
 
 /* ===== ITEMS ===== */
 #items-container{
   display:flex;gap:6px;padding:6px;
-  background:linear-gradient(to bottom,rgba(20,10,5,.9),rgba(10,5,2,.9));
+  background:linear-gradient(to bottom,rgba(15,8,3,.92),rgba(8,4,1,.92));
   border:2px solid var(--rust-dark);border-radius:6px;
   min-height:50px;align-items:center;justify-content:center;
   flex-wrap:wrap;max-width:94%;margin-top:6px;flex-shrink:0;
+  position:relative;z-index:10;
 }
 .item-slot{
-  width:40px;height:40px;background:rgba(30,15,10,.8);
+  width:40px;height:40px;background:rgba(25,12,5,.85);
   border:2px solid var(--rust-dark);border-radius:5px;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;transition:all .15s;position:relative;font-size:1.1rem;
 }
-.item-slot:hover:not(.empty){border-color:var(--gold);transform:translateY(-2px)}
-.item-slot.selected{border-color:var(--blood-bright);box-shadow:0 0 10px rgba(204,0,0,.3);transform:translateY(-2px)}
+.item-slot:hover:not(.empty){border-color:var(--gold);transform:translateY(-2px);box-shadow:0 0 10px rgba(197,160,0,.2)}
+.item-slot.selected{border-color:var(--blood-bright);box-shadow:0 0 12px rgba(204,0,0,.3);transform:translateY(-2px)}
 .item-slot.empty{opacity:.25;cursor:default}
 .item-slot .item-count{
   position:absolute;bottom:-1px;right:1px;font-size:.5rem;color:var(--gold);font-weight:bold;
 }
 .item-slot .item-tooltip{
   display:none;position:absolute;bottom:46px;left:50%;transform:translateX(-50%);
-  background:rgba(10,5,2,.95);border:1px solid var(--rust);
+  background:rgba(8,4,2,.95);border:1px solid var(--rust);
   padding:4px 8px;border-radius:3px;font-size:.6rem;white-space:nowrap;
   z-index:50;color:var(--skin);pointer-events:none;
 }
@@ -286,62 +339,73 @@ body{
   padding:8px 18px;font-family:'Courier New',monospace;font-size:.8rem;
   letter-spacing:.08em;border:2px solid;border-radius:3px;
   cursor:pointer;transition:all .15s;text-transform:uppercase;
+  position:relative;overflow:hidden;
 }
+.action-btn::before{
+  content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);
+  transform:translateX(-100%);transition:transform .5s;
+}
+.action-btn:hover::before{transform:translateX(100%)}
 #btn-self{background:linear-gradient(to bottom,#2a0a0a,#1a0505);border-color:var(--blood-dark);color:var(--blood-bright)}
-#btn-self:hover:not(:disabled){box-shadow:0 0 12px rgba(139,0,0,.4);transform:translateY(-1px)}
+#btn-self:hover:not(:disabled){box-shadow:0 0 15px rgba(139,0,0,.5);transform:translateY(-1px)}
 #btn-dealer{background:linear-gradient(to bottom,#0a1a0a,#050f05);border-color:#0a3a0a;color:var(--green)}
-#btn-dealer:hover:not(:disabled){box-shadow:0 0 12px rgba(0,100,0,.3);transform:translateY(-1px)}
+#btn-dealer:hover:not(:disabled){box-shadow:0 0 15px rgba(0,100,0,.3);transform:translateY(-1px)}
 .action-btn:disabled{opacity:.25;cursor:not-allowed;transform:none!important}
 
 /* ===== CHARGE / STATUS DISPLAY ===== */
 #charge-display{display:flex;gap:6px;align-items:center;font-size:.65rem}
-.charge-indicator{padding:2px 6px;border-radius:3px;border:1px solid}
+.charge-indicator{padding:2px 6px;border-radius:3px;border:1px solid;animation:chargePulse 1.5s infinite}
+@keyframes chargePulse{0%,100%{opacity:1}50%{opacity:.7}}
 .charge-indicator.saw{color:#ff6644;background:rgba(50,10,0,.4);border-color:#662200}
 .charge-indicator.cuffs{color:#6688cc;background:rgba(10,10,40,.4);border-color:#2233aa}
 .charge-indicator.invert{color:#cc66cc;background:rgba(30,10,40,.4);border-color:#662266}
 
 /* ===== OVERLAYS ===== */
 #message-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
   z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;
 }
 #message-overlay.active{display:flex}
-#message-text{font-size:2rem;color:var(--blood-bright);text-shadow:0 0 15px var(--blood);text-align:center}
+#message-text{font-size:2rem;color:var(--blood-bright);text-shadow:0 0 20px var(--blood),0 0 40px rgba(100,0,0,.3);text-align:center}
 #message-sub{font-size:.9rem;color:var(--skin-dark);letter-spacing:.08em;text-align:center}
 
 #round-transition{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);
   z-index:150;align-items:center;justify-content:center;flex-direction:column;gap:10px;
 }
 #round-transition.active{display:flex}
-#round-transition .round-title{font-size:2.5rem;color:var(--blood-bright);text-shadow:0 0 25px var(--blood)}
+#round-transition .round-title{
+  font-size:2.5rem;color:var(--blood-bright);
+  text-shadow:0 0 30px var(--blood),0 0 60px rgba(100,0,0,.4);
+  animation:flicker 2s infinite;
+}
 #round-transition .round-sub{font-size:1rem;color:var(--skin-dark);letter-spacing:.15em}
 
 #game-over{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);
   z-index:250;align-items:center;justify-content:center;flex-direction:column;gap:15px;
 }
 #game-over.active{display:flex}
-#game-over .go-title{font-size:3rem;text-shadow:0 0 30px currentColor}
+#game-over .go-title{font-size:3rem;text-shadow:0 0 40px currentColor;animation:flicker 3s infinite}
 #game-over .go-title.dead{color:var(--blood-bright)}
 #game-over .go-title.won{color:var(--gold)}
-#game-over .go-sub{font-size:1rem;color:var(--skin-dark);letter-spacing:.1em;text-align:center;max-width:400px;line-height:1.5}
+#game-over .go-sub{font-size:1rem;color:var(--skin-dark);letter-spacing:.1em;text-align:center;max-width:400px;line-height:1.6}
 #restart-btn{
   padding:12px 30px;font-family:'Courier New',monospace;font-size:1rem;
   background:linear-gradient(to bottom,#2a0a0a,#1a0505);
   border:2px solid var(--blood-dark);color:var(--blood-bright);
   border-radius:3px;cursor:pointer;letter-spacing:.1em;transition:all .2s;
 }
-#restart-btn:hover{box-shadow:0 0 20px rgba(139,0,0,.5);transform:translateY(-2px)}
+#restart-btn:hover{box-shadow:0 0 25px rgba(139,0,0,.5);transform:translateY(-2px)}
 
 /* ===== RULES PANEL ===== */
 #rules-panel{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);
   z-index:300;align-items:center;justify-content:center;padding:10px;overflow-y:auto;
 }
 #rules-panel.active{display:flex}
 #rules-content{
-  max-width:500px;width:100%;background:rgba(15,8,3,.95);
+  max-width:500px;width:100%;background:rgba(12,6,2,.96);
   border:2px solid var(--rust-dark);border-radius:6px;padding:20px;max-height:85vh;overflow-y:auto;
 }
 #rules-content h2{color:var(--blood-bright);font-size:1.4rem;margin-bottom:10px;text-align:center}
@@ -358,21 +422,11 @@ body{
 /* ===== SETTINGS BAR ===== */
 #settings-bar{position:fixed;top:2px;right:6px;z-index:50;display:flex;gap:6px}
 .settings-btn{
-  background:none;border:1px solid var(--rust-dark);color:var(--skin-dark);
+  background:rgba(10,5,2,.7);border:1px solid var(--rust-dark);color:var(--skin-dark);
   padding:2px 6px;font-family:'Courier New',monospace;font-size:.6rem;
   cursor:pointer;border-radius:2px;letter-spacing:.05em;
 }
 .settings-btn:hover{border-color:var(--gold);color:var(--gold)}
-
-/* ===== AMBIENT ===== */
-#ambient-overlay{
-  position:fixed;inset:0;pointer-events:none;z-index:100;
-  background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.35)100%);
-}
-#vignette{
-  position:fixed;inset:0;pointer-events:none;z-index:99;
-  box-shadow:inset 0 0 100px rgba(0,0,0,.7);
-}
 
 /* ===== BLOOD STREAK ===== */
 .blood-streak{
@@ -380,29 +434,35 @@ body{
   background:linear-gradient(to bottom,var(--blood-bright),var(--blood),transparent);
   animation:bloodDrip 1.5s ease-in forwards;
 }
-@keyframes bloodDrip{0%{height:0;opacity:.7}100%{height:150px;opacity:0}}
+@keyframes bloodDrip{0%{height:0;opacity:.8}100%{height:200px;opacity:0}}
 
 /* ===== PARTICLES ===== */
 #particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .dust{
-  position:absolute;width:2px;height:2px;background:rgba(196,149,106,.12);
+  position:absolute;width:2px;height:2px;background:rgba(196,149,106,.1);
   border-radius:50%;animation:floatParticle 8s linear infinite;
 }
 @keyframes floatParticle{
   0%{transform:translateY(100vh) translateX(0);opacity:0}
-  10%{opacity:.25}90%{opacity:.25}
+  10%{opacity:.2}90%{opacity:.2}
   100%{transform:translateY(-10px) translateX(40px);opacity:0}
+}
+
+/* ===== SHADOWS ===== */
+#shadow-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:85;
+  background:transparent;transition:background 1s;
+}
+#shadow-layer.active{
+  background:radial-gradient(ellipse at 50% 120%,rgba(0,0,0,.6) 0%,transparent 60%);
 }
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:400px){
   .item-slot{width:34px;height:34px;font-size:.9rem}
   .action-btn{padding:6px 12px;font-size:.7rem}
-  #dealer{top:-85px}
-  #dealer-body{width:65px;height:80px}
-  .dealer-head{width:42px;height:46px}
-  .dealer-torso{width:46px;height:40px}
-  #shotgun{transform:scale(.75)}
+  #dealer-canvas{top:-110px;transform:translateX(-50%) scale(.8)}
+  #dealer-dialog{bottom:110px}
 }
 </style>
 </head>
@@ -411,10 +471,11 @@ body{
 <!-- Title Screen -->
 <div id="title-screen">
   <div class="blood-drip" style="left:10%;animation-delay:0s"></div>
-  <div class="blood-drip" style="left:30%;animation-delay:1.2s"></div>
-  <div class="blood-drip" style="left:50%;animation-delay:0.5s"></div>
-  <div class="blood-drip" style="left:70%;animation-delay:1.8s"></div>
-  <div class="blood-drip" style="left:90%;animation-delay:0.8s"></div>
+  <div class="blood-drip" style="left:25%;animation-delay:1.5s"></div>
+  <div class="blood-drip" style="left:40%;animation-delay:.7s"></div>
+  <div class="blood-drip" style="left:55%;animation-delay:2.1s"></div>
+  <div class="blood-drip" style="left:70%;animation-delay:.3s"></div>
+  <div class="blood-drip" style="left:85%;animation-delay:1.8s"></div>
   <div class="title">BUCKSHOT<br>ROULETTE</div>
   <div class="subtitle">— ROBLOX —</div>
   <div class="click-prompt">[ TAP TO BEGIN ]</div>
@@ -429,9 +490,9 @@ body{
     <h3>Health</h3>
     <p>Both players start each round with <strong>5 lives</strong>. Watch the wire cutter — if your health drops too low, it cuts your wires and you can no longer heal.</p>
     <h3>Rounds & Items</h3>
-    <p><strong>Round 1:</strong> No items. Pure probability. Shells loaded and you're told how many are live vs blank.</p>
+    <p><strong>Round 1:</strong> No items. Pure probability. Shell counts randomized each reload.</p>
     <p><strong>Round 2:</strong> 2 items per loadout. The game shifts to resource management.</p>
-    <p><strong>Round 3:</strong> 4 items per loadout. All items available including rare ones.</p>
+    <p><strong>Round 3:</strong> All items. Maximum danger.</p>
     <h3>On Your Turn</h3>
     <ul>
       <li><strong>SHOOT YOURSELF</strong> — Blank = survive + extra turn. Live = lose HP, turn passes.</li>
@@ -449,8 +510,6 @@ body{
       <li>📱 <strong>Burner Phone</strong> — Reveals a future shell (not the current one).</li>
       <li>🔄 <strong>Polarity Inverter</strong> — Flips the current shell: live↔blank.</li>
     </ul>
-    <h3>Dealer AI</h3>
-    <p>The dealer is strategic. He tracks shell counts, uses items, and adapts. Watch his behavior — he's not random.</p>
     <button class="close-rules" onclick="closeRules()">CLOSE</button>
   </div>
 </div>
@@ -458,8 +517,11 @@ body{
 <!-- Game Screen -->
 <div id="game-screen">
   <div id="particles"></div>
-  <div id="ambient-overlay"></div>
-  <div id="vignette"></div>
+  <div id="ambient-layer"></div>
+  <div id="shadow-layer"></div>
+  <div id="vignette-layer" class="vignette-pulse"></div>
+  <div id="scanline-overlay"></div>
+  <div id="flicker-overlay"></div>
 
   <div id="settings-bar">
     <button class="settings-btn" onclick="toggleRules()">📜</button>
@@ -485,24 +547,9 @@ body{
 
   <!-- Main Area -->
   <div id="main-area">
-    <!-- Dealer -->
-    <div id="dealer">
-      <div id="dealer-dialog"></div>
-      <div id="dealer-body">
-        <div class="dealer-hat"></div>
-        <div class="dealer-head" id="dealer-head">
-          <div class="dealer-eyes">
-            <div class="dealer-eye" id="dealer-eye-l"></div>
-            <div class="dealer-eye" id="dealer-eye-r"></div>
-          </div>
-          <div class="dealer-mouth" id="dealer-mouth"></div>
-          <div class="blood-splatter" id="blood-l"></div>
-          <div class="blood-splatter" id="blood-r"></div>
-          <div class="blood-splatter" id="blood-c"></div>
-        </div>
-        <div class="dealer-torso"></div>
-      </div>
-    </div>
+    <!-- Dealer Canvas -->
+    <canvas id="dealer-canvas" width="160" height="180"></canvas>
+    <div id="dealer-dialog"></div>
 
     <!-- Shotgun -->
     <div id="shotgun-container">
@@ -568,12 +615,11 @@ const S={
   wiresCut:false,adrenalineUsed:false,
   dealerKnowsShell:false,dealerKnowsFutureShell:-1,
   selectedItem:null,processing:false,
+  dealerDamage:0, // 0-3, increases visual damage
 };
 
-// Wire cutter threshold — wires get cut at 2 HP or below
 const WIRE_CUT_THRESHOLD=2;
 
-// Item definitions
 const ITEMS={
   healing_bottle:{name:'Healing Bottle',emoji:'💊',desc:'Restore 1 HP (needs wires)',max:1},
   magnifying_glass:{name:'Magnifying Glass',emoji:'🔍',desc:'Peek at current shell',max:1},
@@ -585,47 +631,369 @@ const ITEMS={
   polarity_inverter:{name:'Polarity Inverter',emoji:'🔄',desc:'Flip current shell live↔blank',max:1},
 };
 
-// Round configurations — Roblox version
-// Shell counts are randomized each reload within these ranges per round:
-// Round 1: 1-3 live, 1-3 blank (total 3-5 shells)
-// Round 2: 2-4 live, 1-3 blank (total 4-6 shells)
-// Round 3: 3-5 live, 2-4 blank (total 5-8 shells)
 const ROUNDS=[
-  // Round 1: no items
   {playerHP:5,dealerHP:5,liveMin:1,liveMax:3,blankMin:1,blankMax:3,items:{}},
-  // Round 2: 2 items each
   {playerHP:5,dealerHP:5,liveMin:2,liveMax:4,blankMin:1,blankMax:3,items:{
     healing_bottle:1,magnifying_glass:1,beer:1,handsaw:1,handcuffs:1,adrenaline:0,burner_phone:0,polarity_inverter:0
   }},
-  // Round 3: all items
   {playerHP:5,dealerHP:5,liveMin:3,liveMax:5,blankMin:2,blankMax:4,items:{
     healing_bottle:1,magnifying_glass:1,beer:1,handsaw:1,handcuffs:1,adrenaline:1,burner_phone:1,polarity_inverter:1
   }},
 ];
 
-// Ensure round 2 only gives 2 items — we'll randomly pick from the pool
 const ROUND2_POOL=['healing_bottle','magnifying_glass','beer','handsaw','handcuffs'];
 
-// Dealer dialogue
 const DIALOG={
-  playerTurn:["Your move...","Choose wisely.","Don't keep me waiting.","Tick tock...","What'll it be?","Go on then."],
-  shootSelfBlank:["Lucky you.","Hmm. Lucky.","Not dead yet, huh?","Fortune favors you... for now."],
-  shootSelfLive:["Ouch.","There it is.","*chuckles*","That's gotta hurt."],
-  shootDealerBlank:["Click. Nothing.","Wasn't that one.","Bad luck."],
-  shootDealerLive:["Gah!","Nngh!","Tch!","Ugh!"],
-  dealerTurn:["My turn now.","Let me show you how it's done.","Watch closely.","Here we go."],
-  dealerShootSelfBlank:["Ah. Lucky me.","Still here.","Not today."],
-  dealerShootSelfLive:["Nngh...!","Gah...!","Ugh...!"],
-  dealerShootPlayer:["Say goodnight.","This one's for you.","Here it comes.","Sleep."],
-  roundStart:["Round {round}. Let's go.","Round {round}. No mercy.","Round {round}. Don't die."],
-  lowHealth:["Getting nervous?","You look pale.","Not looking good for you."],
-  dealerLowHealth:["You're tougher than you look.","Lucky shots...","This isn't over."],
+  playerTurn:["Your move...","Choose wisely.","Don't keep me waiting.","Tick tock...","What'll it be?","Go on then.","I'm waiting...","Hurry up, dear."],
+  shootSelfBlank:["Lucky you.","Hmm. Lucky.","Not dead yet, huh?","Fortune favors you... for now.","How... fortunate."],
+  shootSelfLive:["Ouch.","There it is.","*chuckles*","That's gotta hurt.","Delicious."],
+  shootDealerBlank:["Click. Nothing.","Wasn't that one.","Bad luck.","Tch."],
+  shootDealerLive:["Gah!","Nngh!","Tch!","Ugh!","Rrgh!"],
+  dealerTurn:["My turn now.","Let me show you how it's done.","Watch closely.","Here we go.","Shh..."],
+  dealerShootSelfBlank:["Ah. Lucky me.","Still here.","Not today.","Mmm."],
+  dealerShootSelfLive:["Nngh...!","Gah...!","Ugh...!","Hrngh!"],
+  dealerShootPlayer:["Say goodnight.","This one's for you.","Here it comes.","Sleep.","Shh... close your eyes."],
+  roundStart:["Round {round}. Let's go.","Round {round}. No mercy.","Round {round}. Don't die.","Round {round}..."],
+  lowHealth:["Getting nervous?","You look pale.","Not looking good for you.","*licks lips*","I can smell the fear."],
+  dealerLowHealth:["You're tougher than you look.","Lucky shots...","This isn't over.","Nngh..."],
 };
+
+// ===== DEALER CANVAS RENDERING =====
+const dealerCanvas=document.getElementById('dealer-canvas');
+const dCtx=dealerCanvas.getContext('2d');
+let dealerAnimFrame=0,dealerBlinkTimer=0,dealerBreathCycle=0;
+let dealerTalking=false,dealerTalkTimer=0;
+let dealerEyeTarget={x:0,y:0};
+let dealerHitFlash=0;
+
+function drawDealer(){
+  const w=160,h=180;
+  dCtx.clearRect(0,0,w,h);
+  dealerAnimFrame++;
+  dealerBreathCycle+=0.03;
+
+  const cx=w/2;
+  const damage=S.dealerDamage;
+
+  // --- SHADOW / AURA ---
+  const auraGrad=dCtx.createRadialGradient(cx,60,10,cx,60,80);
+  auraGrad.addColorStop(0,'rgba(60,0,0,'+(0.15+Math.sin(dealerAnimFrame*0.02)*0.05)+')');
+  auraGrad.addColorStop(1,'transparent');
+  dCtx.fillStyle=auraGrad;
+  dCtx.fillRect(0,0,w,h);
+
+  // --- BODY / SUIT ---
+  // Tattered suit jacket
+  dCtx.fillStyle='#0a0a0a';
+  dCtx.beginPath();
+  dCtx.moveTo(cx-28,110);
+  dCtx.lineTo(cx+28,110);
+  dCtx.lineTo(cx+22,175);
+  dCtx.lineTo(cx-22,175);
+  dCtx.closePath();
+  dCtx.fill();
+
+  // Suit lapels
+  dCtx.strokeStyle='#1a1a1a';
+  dCtx.lineWidth=1.5;
+  dCtx.beginPath();
+  dCtx.moveTo(cx-8,110);dCtx.lineTo(cx-18,140);dCtx.lineTo(cx-12,145);dCtx.lineTo(cx-6,120);
+  dCtx.stroke();
+  dCtx.beginPath();
+  dCtx.moveTo(cx+8,110);dCtx.lineTo(cx+18,140);dCtx.lineTo(cx+12,145);dCtx.lineTo(cx+6,120);
+  dCtx.stroke();
+
+  // Tie
+  dCtx.fillStyle='#2a0000';
+  dCtx.beginPath();
+  dCtx.moveTo(cx-4,110);dCtx.lineTo(cx+4,110);dCtx.lineTo(cx+2,150);dCtx.lineTo(cx,155);dCtx.lineTo(cx-2,150);
+  dCtx.closePath();
+  dCtx.fill();
+
+  // Tattered edges on suit
+  dCtx.strokeStyle='rgba(40,20,10,.6)';
+  dCtx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    const sx=cx-22+i*11;
+    const sy=175+Math.sin(dealerAnimFrame*0.05+i)*2;
+    dCtx.beginPath();
+    dCtx.moveTo(sx,172);dCtx.lineTo(sx+3,sy);dCtx.lineTo(sx+6,172);
+    dCtx.stroke();
+  }
+
+  // --- NECK ---
+  const neckShake=dealerHitFlash>0?Math.sin(dealerAnimFrame*0.8)*2:0;
+  dCtx.fillStyle='#8a7060';
+  dCtx.fillRect(cx-8,95+Math.sin(dealerBreathCycle)*0.5,16,18);
+
+  // Neck tendons (visible, unsettling)
+  dCtx.strokeStyle='rgba(100,70,50,.4)';
+  dCtx.lineWidth=0.8;
+  dCtx.beginPath();dCtx.moveTo(cx-4,98);dCtx.lineTo(cx-6,112);dCtx.stroke();
+  dCtx.beginPath();dCtx.moveTo(cx+4,98);dCtx.lineTo(cx+6,112);dCtx.stroke();
+
+  // --- HEAD ---
+  const headY=52+Math.sin(dealerBreathCycle)*0.8;
+  const headTilt=dealerHitFlash>0?Math.sin(dealerAnimFrame*0.6)*3:0;
+
+  dCtx.save();
+  dCtx.translate(cx+headTilt,headY);
+
+  // Head shape — gaunt, elongated
+  const headGrad=dCtx.createRadialGradient(0,0,5,0,0,28);
+  headGrad.addColorStop(0,'#b8956a');
+  headGrad.addColorStop(0.5,'#8a6d4f');
+  headGrad.addColorStop(1,'#5a3d2a');
+  dCtx.fillStyle=headGrad;
+  dCtx.beginPath();
+  dCtx.ellipse(0,0,24,30,0,0,Math.PI*2);
+  dCtx.fill();
+
+  // Cracked skin texture
+  dCtx.strokeStyle='rgba(60,30,15,.25)';
+  dCtx.lineWidth=0.6;
+  for(let i=0;i<8;i++){
+    const sx=-15+Math.random()*30;
+    const sy=-20+Math.random()*40;
+    dCtx.beginPath();
+    dCtx.moveTo(sx,sy);
+    dCtx.lineTo(sx+(Math.random()-.5)*8,sy+(Math.random()-.5)*8);
+    dCtx.lineTo(sx+(Math.random()-.5)*12,sy+(Math.random()-.5)*6);
+    dCtx.stroke();
+  }
+
+  // Sunken cheeks
+  dCtx.fillStyle='rgba(50,25,10,.2)';
+  dCtx.beginPath();dCtx.ellipse(-14,8,8,10,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(14,8,8,10,0,0,Math.PI*2);dCtx.fill();
+
+  // Cheekbones
+  dCtx.strokeStyle='rgba(120,80,50,.3)';
+  dCtx.lineWidth=1;
+  dCtx.beginPath();dCtx.moveTo(-18,2);dCtx.quadraticCurveTo(-12,8,-8,6);dCtx.stroke();
+  dCtx.beginPath();dCtx.moveTo(18,2);dCtx.quadraticCurveTo(12,8,8,6);dCtx.stroke();
+
+  // --- EYES ---
+  dealerBlinkTimer++;
+  const isBlinking=dealerBlinkTimer%240<4;
+  const eyeOpen=isBlinking?0.1:1;
+
+  // Eye sockets (deep, dark)
+  dCtx.fillStyle='rgba(15,5,0,.7)';
+  dCtx.beginPath();dCtx.ellipse(-9,-6,7,5,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(9,-6,7,5,0,0,Math.PI*2);dCtx.fill();
+
+  // Eyeballs
+  const eyeH=4.5*eyeOpen;
+  dCtx.fillStyle='#e8ddd0';
+  dCtx.beginPath();dCtx.ellipse(-9,-6,4.5,eyeH,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(9,-6,4.5,eyeH,0,0,Math.PI*2);dCtx.fill();
+
+  // Bloodshot veins
+  dCtx.strokeStyle='rgba(180,30,20,.4)';
+  dCtx.lineWidth=0.4;
+  for(let i=0;i<3;i++){
+    const ex=i%2===0?-9:9;
+    dCtx.beginPath();
+    dCtx.moveTo(ex-3,-6+i*2);
+    dCtx.quadraticCurveTo(ex+Math.sin(i)*2,-8+i,ex+3,-6+i*1.5);
+    dCtx.stroke();
+  }
+
+  // Irises — dark, reflective
+  const irisX=dealerEyeTarget.x*1.5;
+  const irisY=dealerEyeTarget.y*1.5;
+  dCtx.fillStyle='#1a0500';
+  dCtx.beginPath();dCtx.ellipse(-9+irisX,-6+irisY,2.5,2.5*eyeOpen,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(9+irisX,-6+irisY,2.5,2.5*eyeOpen,0,0,Math.PI*2);dCtx.fill();
+
+  // Pupils — tiny, black
+  dCtx.fillStyle='#000';
+  dCtx.beginPath();dCtx.ellipse(-9+irisX,-6+irisY,1.2,1.2*eyeOpen,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(9+irisX,-6+irisY,1.2,1.2*eyeOpen,0,0,Math.PI*2);dCtx.fill();
+
+  // Eye light reflection
+  if(eyeOpen>0.5){
+    dCtx.fillStyle='rgba(255,255,200,.6)';
+    dCtx.beginPath();dCtx.arc(-8+irisX,-7+irisY,0.8,0,Math.PI*2);dCtx.fill();
+    dCtx.beginPath();dCtx.arc(10+irisX,-7+irisY,0.8,0,Math.PI*2);dCtx.fill();
+  }
+
+  // Dark circles under eyes
+  dCtx.fillStyle='rgba(40,15,5,.3)';
+  dCtx.beginPath();dCtx.ellipse(-9,-2,5,2,0,0,Math.PI);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(9,-2,5,2,0,0,Math.PI);dCtx.fill();
+
+  // --- EYEBROWS ---
+  dCtx.strokeStyle='rgba(40,20,10,.6)';
+  dCtx.lineWidth=2;
+  dCtx.beginPath();
+  dCtx.moveTo(-14,-12);dCtx.quadraticCurveTo(-9,-15+Math.sin(dealerAnimFrame*0.01)*0.5,-4,-13);
+  dCtx.stroke();
+  dCtx.beginPath();
+  dCtx.moveTo(14,-12);dCtx.quadraticCurveTo(9,-15+Math.sin(dealerAnimFrame*0.01)*0.5,4,-13);
+  dCtx.stroke();
+
+  // --- NOSE ---
+  dCtx.strokeStyle='rgba(80,50,30,.4)';
+  dCtx.lineWidth=1.2;
+  dCtx.beginPath();
+  dCtx.moveTo(0,-3);dCtx.lineTo(-2,5);dCtx.lineTo(2,5);
+  dCtx.stroke();
+  // Nostrils
+  dCtx.fillStyle='rgba(30,15,5,.4)';
+  dCtx.beginPath();dCtx.ellipse(-2,5,1.5,1,0,0,Math.PI*2);dCtx.fill();
+  dCtx.beginPath();dCtx.ellipse(2,5,1.5,1,0,0,Math.PI*2);dCtx.fill();
+
+  // --- MOUTH ---
+  const mouthOpen=dealerTalking?0.6+Math.sin(dealerAnimFrame*0.5)*0.3:0.15;
+  const mouthW=12+Math.sin(dealerAnimFrame*0.02)*1;
+
+  // Mouth line / opening
+  dCtx.fillStyle='#1a0500';
+  dCtx.beginPath();
+  dCtx.ellipse(0,16,mouthW,mouthOpen*8+1,0,0,Math.PI*2);
+  dCtx.fill();
+
+  // Teeth (visible when mouth open)
+  if(mouthOpen>0.3){
+    // Upper teeth
+    dCtx.fillStyle='#d4c4a0';
+    for(let i=0;i<5;i++){
+      const tx=-8+i*3.5;
+      const ty=13;
+      dCtx.fillRect(tx,ty,2.5,3);
+    }
+    // Lower teeth
+    for(let i=0;i<5;i++){
+      const tx=-8+i*3.5;
+      const ty=17;
+      dCtx.fillRect(tx,ty,2.5,2.5);
+    }
+    // Some teeth darker/yellower
+    dCtx.fillStyle='#a09070';
+    dCtx.fillRect(-4,13,2.5,3);
+    dCtx.fillRect(4,13,2.5,3);
+  }
+
+  // Lips
+  dCtx.strokeStyle='rgba(80,30,20,.5)';
+  dCtx.lineWidth=1;
+  dCtx.beginPath();
+  dCtx.moveTo(-mouthW,16);dCtx.quadraticCurveTo(0,14,mouthW,16);
+  dCtx.stroke();
+
+  // --- DAMAGE MARKS ---
+  if(damage>=1){
+    // Cut on left cheek
+    dCtx.strokeStyle='rgba(120,20,10,.6)';
+    dCtx.lineWidth=1.5;
+    dCtx.beginPath();dCtx.moveTo(-18,-2);dCtx.lineTo(-12,10);dCtx.stroke();
+    dCtx.fillStyle='rgba(80,10,5,.3)';
+    dCtx.beginPath();dCtx.ellipse(-15,4,4,6,0.3,0,Math.PI*2);dCtx.fill();
+  }
+  if(damage>=2){
+    // Bruise on right side
+    dCtx.fillStyle='rgba(60,10,30,.25)';
+    dCtx.beginPath();dCtx.ellipse(14,2,10,12,0,0,Math.PI*2);dCtx.fill();
+    // Split lip
+    dCtx.strokeStyle='rgba(100,15,5,.5)';
+    dCtx.lineWidth=1;
+    dCtx.beginPath();dCtx.moveTo(2,15);dCtx.lineTo(5,17);dCtx.stroke();
+  }
+  if(damage>=3){
+    // Eye swelling
+    dCtx.fillStyle='rgba(80,15,10,.35)';
+    dCtx.beginPath();dCtx.ellipse(9,-6,6,4,0,0,Math.PI*2);dCtx.fill();
+    // More cuts
+    dCtx.strokeStyle='rgba(100,15,5,.4)';
+    dCtx.lineWidth=1;
+    dCtx.beginPath();dCtx.moveTo(-8,12);dCtx.lineTo(-3,18);dCtx.stroke();
+    dCtx.beginPath();dCtx.moveTo(5,8);dCtx.lineTo(10,14);dCtx.stroke();
+  }
+
+  // --- HAT ---
+  // Hat brim
+  dCtx.fillStyle='#111';
+  dCtx.beginPath();
+  dCtx.ellipse(0,-22,30,5,0,0,Math.PI*2);
+  dCtx.fill();
+  // Hat crown
+  dCtx.fillStyle='#1a1a1a';
+  dCtx.beginPath();
+  dCtx.moveTo(-18,-24);
+  dCtx.lineTo(-16,-42);
+  dCtx.quadraticCurveTo(0,-46,16,-42);
+  dCtx.lineTo(18,-24);
+  dCtx.closePath();
+  dCtx.fill();
+  // Hat band
+  dCtx.fillStyle='#2a0000';
+  dCtx.fillRect(-18,-27,36,3);
+  // Hat highlight
+  dCtx.strokeStyle='rgba(60,60,60,.3)';
+  dCtx.lineWidth=0.8;
+  dCtx.beginPath();
+  dCtx.moveTo(-10,-40);dCtx.quadraticCurveTo(0,-43,10,-40);
+  dCtx.stroke();
+
+  dCtx.restore();
+
+  // --- HIT FLASH ---
+  if(dealerHitFlash>0){
+    dealerHitFlash--;
+    dCtx.fillStyle=`rgba(255,50,20,${dealerHitFlash*0.03})`;
+    dCtx.fillRect(0,0,w,h);
+  }
+
+  // --- FLOATING EYES GLOW (subtle) ---
+  if(S.dealerHP<=2){
+    const glowIntensity=0.05+Math.sin(dealerAnimFrame*0.08)*0.03;
+    dCtx.fillStyle=`rgba(200,30,10,${glowIntensity})`;
+    dCtx.beginPath();dCtx.ellipse(cx-9,headY-6,3,2,0,0,Math.PI*2);dCtx.fill();
+    dCtx.beginPath();dCtx.ellipse(cx+9,headY-6,3,2,0,0,Math.PI*2);dCtx.fill();
+  }
+
+  requestAnimationFrame(drawDealer);
+}
+
+function updateDealerEyes(tx,ty){
+  dealerEyeTarget.x+=(tx-dealerEyeTarget.x)*0.1;
+  dealerEyeTarget.y+=(ty-dealerEyeTarget.y)*0.1;
+}
+
+function dealerHit(){
+  dealerHitFlash=15;
+  S.dealerDamage=Math.min(3,S.dealerDamage+1);
+}
+
+function dealerSpeak(){
+  dealerTalking=true;
+  dealerTalkTimer=60;
+  const iv=setInterval(()=>{
+    dealerTalkTimer--;
+    if(dealerTalkTimer<=0){
+      dealerTalking=false;
+      clearInterval(iv);
+    }
+  },16);
+}
+
+// Start dealer animation
+drawDealer();
+
+// Random eye movement
+setInterval(()=>{
+  if(!S.gameOver){
+    updateDealerEyes((Math.random()-.5)*3,(Math.random()-.5)*2);
+  }
+},2000);
 
 // ===== AUDIO =====
 const AC=window.AudioContext||window.webkitAudioContext;
 let ac;
 function initAudio(){if(!ac)ac=new AC()}
+
 function playSound(type){
   if(!S.audioEnabled)return;
   initAudio();
@@ -634,45 +1002,83 @@ function playSound(type){
   switch(type){
     case 'shoot-live':
       o.type='sawtooth';o.frequency.setValueAtTime(80,ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(30,ac.currentTime+.3);
-      g.gain.setValueAtTime(.5,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.4);
-      o.start();o.stop(ac.currentTime+.4);playNoise(.25,.12);
+      o.frequency.exponentialRampToValueAtTime(25,ac.currentTime+.35);
+      g.gain.setValueAtTime(.55,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.45);
+      o.start();o.stop(ac.currentTime+.45);playNoise(.3,.15);
       break;
     case 'shoot-blank':
-      o.type='square';o.frequency.setValueAtTime(200,ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+.05);
-      g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.08);
-      o.start();o.stop(ac.currentTime+.08);
+      o.type='square';o.frequency.setValueAtTime(220,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+.06);
+      g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.1);
+      o.start();o.stop(ac.currentTime+.1);
       break;
     case 'item':
-      o.type='sine';o.frequency.setValueAtTime(440,ac.currentTime);
-      o.frequency.setValueAtTime(660,ac.currentTime+.1);
-      g.gain.setValueAtTime(.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.2);
-      o.start();o.stop(ac.currentTime+.2);
+      o.type='sine';o.frequency.setValueAtTime(400,ac.currentTime);
+      o.frequency.setValueAtTime(600,ac.currentTime+.08);
+      o.frequency.setValueAtTime(500,ac.currentTime+.16);
+      g.gain.setValueAtTime(.1,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.25);
+      o.start();o.stop(ac.currentTime+.25);
       break;
     case 'heartbeat':
-      o.type='sine';o.frequency.setValueAtTime(60,ac.currentTime);
-      g.gain.setValueAtTime(0,ac.currentTime);
-      g.gain.linearRampToValueAtTime(.15,ac.currentTime+.05);
-      g.gain.linearRampToValueAtTime(0,ac.currentTime+.15);
-      g.gain.linearRampToValueAtTime(.1,ac.currentTime+.2);
-      g.gain.linearRampToValueAtTime(0,ac.currentTime+.35);
-      o.start();o.stop(ac.currentTime+.35);
-      break;
+      {const bpm=S.playerHP<=2?120:80;
+      const beatLen=60/bpm;
+      for(let i=0;i<2;i++){
+        const t=ac.currentTime+i*beatLen*.35;
+        const o2=ac.createOscillator(),g2=ac.createGain();
+        o2.type='sine';o2.frequency.setValueAtTime(50,t);
+        g2.gain.setValueAtTime(0,t);
+        g2.gain.linearRampToValueAtTime(.18,t+.04);
+        g2.gain.linearRampToValueAtTime(0,t+.12);
+        g2.gain.linearRampToValueAtTime(.12,t+.18);
+        g2.gain.linearRampToValueAtTime(0,t+.3);
+        o2.connect(g2);g2.connect(ac.destination);
+        o2.start(t);o2.stop(t+.3);
+      }
+      break;}
     case 'death':
-      o.type='sawtooth';o.frequency.setValueAtTime(200,ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(40,ac.currentTime+1.5);
-      g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+1.5);
-      o.start();o.stop(ac.currentTime+1.5);
+      o.type='sawtooth';o.frequency.setValueAtTime(180,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(20,ac.currentTime+2);
+      g.gain.setValueAtTime(.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+2);
+      o.start();o.stop(ac.currentTime+2);
+      // Rumble
+      {const o2=ac.createOscillator(),g2=ac.createGain();
+      o2.type='sine';o2.frequency.setValueAtTime(30,ac.currentTime);
+      g2.gain.setValueAtTime(.2,ac.currentTime);g2.gain.exponentialRampToValueAtTime(.01,ac.currentTime+2);
+      o2.connect(g2);g2.connect(ac.destination);o2.start();o2.stop(ac.currentTime+2);}
       break;
     case 'load':
-      o.type='triangle';o.frequency.setValueAtTime(150,ac.currentTime);
-      o.frequency.setValueAtTime(200,ac.currentTime+.1);
-      g.gain.setValueAtTime(.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.2);
-      o.start();o.stop(ac.currentTime+.2);
+      o.type='triangle';o.frequency.setValueAtTime(120,ac.currentTime);
+      o.frequency.setValueAtTime(180,ac.currentTime+.08);
+      o.frequency.setValueAtTime(140,ac.currentTime+.16);
+      g.gain.setValueAtTime(.06,ac.currentTime);g.gain.exponentialRampToValueAtTime(.01,ac.currentTime+.25);
+      o.start();o.stop(ac.currentTime+.25);
+      break;
+    case 'whisper':
+      // Unsettling whisper-like noise
+      playNoise(.8,.03);
+      {const o2=ac.createOscillator(),g2=ac.createGain();
+      o2.type='sine';o2.frequency.setValueAtTime(200+Math.random()*100,ac.currentTime);
+      o2.frequency.linearRampToValueAtTime(150+Math.random()*50,ac.currentTime+.8);
+      g2.gain.setValueAtTime(.02,ac.currentTime);g2.gain.linearRampToValueAtTime(.04,ac.currentTime+.4);
+      g2.gain.linearRampToValueAtTime(0,ac.currentTime+.8);
+      o2.connect(g2);g2.connect(ac.destination);o2.start();o2.stop(ac.currentTime+.8);}
+      break;
+    case 'ambient-dread':
+      {const o2=ac.createOscillator(),g2=ac.createGain();
+      o2.type='sine';o2.frequency.setValueAtTime(35+Math.random()*15,ac.currentTime);
+      o2.frequency.linearRampToValueAtTime(25+Math.random()*10,ac.currentTime+3);
+      g2.gain.setValueAtTime(.015,ac.currentTime);g2.gain.linearRampToValueAtTime(.03,ac.currentTime+1.5);
+      g2.gain.linearRampToValueAtTime(.001,ac.currentTime+3);
+      o2.connect(g2);g2.connect(ac.destination);o2.start();o2.stop(ac.currentTime+3);
+      // Subtle dissonance
+      const o3=ac.createOscillator(),g3=ac.createGain();
+      o3.type='sine';o3.frequency.setValueAtTime(37+Math.random()*5,ac.currentTime);
+      g3.gain.setValueAtTime(.008,ac.currentTime);g3.gain.exponentialRampToValueAtTime(.001,ac.currentTime+3);
+      o3.connect(g3);g3.connect(ac.destination);o3.start();o3.stop(ac.currentTime+3);}
       break;
   }
 }
+
 function playNoise(dur,vol){
   const bs=ac.sampleRate*dur,b=ac.createBuffer(1,bs,ac.sampleRate),d=b.getChannelData(0);
   for(let i=0;i<bs;i++)d[i]=(Math.random()*2-1)*vol;
@@ -682,21 +1088,51 @@ function playNoise(dur,vol){
   s.connect(g);g.connect(ac.destination);s.start();
 }
 
-// Ambient drone
-let droneIv;
-function startAmbient(){stopAmbient();droneIv=setInterval(()=>{
-  if(!S.audioEnabled||S.gameOver)return;initAudio();
-  const o=ac.createOscillator(),g=ac.createGain();
-  o.type='sine';o.frequency.setValueAtTime(40+Math.random()*20,ac.currentTime);
-  g.gain.setValueAtTime(.02,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+2);
-  o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+2);
-},3000)}
-function stopAmbient(){if(droneIv)clearInterval(droneIv)}
+// Ambient system
+let ambientIv;
+function startAmbient(){
+  stopAmbient();
+  ambientIv=setInterval(()=>{
+    if(!S.audioEnabled||S.gameOver)return;
+    initAudio();
+    playSound('ambient-dread');
+    // Random whispers
+    if(Math.random()<.15)playSound('whisper');
+  },4000);
+}
+function stopAmbient(){if(ambientIv)clearInterval(ambientIv)}
+
+// Light flicker
+let flickerIv;
+function startFlicker(){
+  stopFlicker();
+  flickerIv=setInterval(()=>{
+    if(Math.random()<.08){
+      const fo=document.getElementById('flicker-overlay');
+      fo.classList.add('flicker');
+      setTimeout(()=>fo.classList.remove('flicker'),50+Math.random()*100);
+    }
+  },500);
+}
+function stopFlicker(){if(flickerIv)clearInterval(flickerIv)}
+
+// Random glitch effect
+let glitchIv;
+function startGlitch(){
+  stopGlitch();
+  glitchIv=setInterval(()=>{
+    if(Math.random()<.03&&!S.gameOver){
+      document.body.classList.add('glitch');
+      setTimeout(()=>document.body.classList.remove('glitch'),300);
+    }
+  },3000);
+}
+function stopGlitch(){if(glitchIv)clearInterval(glitchIv)}
 
 // ===== PARTICLES =====
 function createParticles(){
   const c=document.getElementById('particles');c.innerHTML='';
-  for(let i=0;i<20;i++){
+  for(let i=0;i<15;i++){
     const d=document.createElement('div');d.className='dust';
     d.style.left=Math.random()*100+'%';
     d.style.animationDelay=Math.random()*8+'s';
@@ -719,13 +1155,19 @@ function updateHealth(){
     h.className='heart'+(i>=S.dealerHP?' empty':'');
     dh.appendChild(h);
   }
-  // Wire cutter status
   const ws=document.getElementById('wire-status');
   if(S.playerHP<=WIRE_CUT_THRESHOLD&&!S.wiresCut){
     S.wiresCut=true;
     ws.className='cut';
     ws.textContent='WIRES CUT';
   }
+  // Update ambient based on danger
+  const al=document.getElementById('ambient-layer');
+  if(S.playerHP<=2)al.classList.add('danger');
+  else al.classList.remove('danger');
+  // Vignette speed based on HP
+  const vl=document.getElementById('vignette-layer');
+  vl.style.animationDuration=(0.6+S.playerHP*0.15)+'s';
 }
 
 function updateShells(){
@@ -740,8 +1182,7 @@ function updateShells(){
   }
   const rem=S.shells.slice(cur);
   const lc=rem.filter(s=>s==='live').length,bc=rem.filter(s=>s==='blank').length;
-  document.getElementById('shell-count').textContent=
-    `${total-cur} LEFT (${lc}L/${bc}B)`;
+  document.getElementById('shell-count').textContent=`${total-cur} LEFT (${lc}L/${bc}B)`;
 }
 
 function updateItems(){
@@ -791,11 +1232,10 @@ function dealerSay(cat){
   const text=opts[Math.floor(Math.random()*opts.length)].replace('{round}',S.round);
   const d=document.getElementById('dealer-dialog');
   d.textContent=text;d.classList.add('active');
-  document.getElementById('dealer-mouth').classList.add('wide');
-  setTimeout(()=>{
-    document.getElementById('dealer-mouth').classList.remove('wide');
-    d.classList.remove('active');
-  },1800);
+  dealerSpeak();
+  // Look at player when talking
+  updateDealerEyes(0,0);
+  setTimeout(()=>d.classList.remove('active'),2000);
 }
 
 // ===== DEALER AI =====
@@ -832,7 +1272,6 @@ function dealerUseItem(key){
       S.dealerKnowsShell=true;
       break;
     case 'burner_phone':
-      // Dealer peeks at a future shell
       {const futureIdx=S.currentShell+1+Math.floor(Math.random()*Math.min(3,S.shells.length-S.currentShell-1));
       if(futureIdx<S.shells.length){S.dealerKnowsFutureShell=futureIdx;}
       break;}
@@ -849,77 +1288,41 @@ function dealerUseItem(key){
 
 function dealerDecide(){
   const rem=S.shells.slice(S.currentShell);
-  const lc=rem.filter(s=>s==='live').length;
-  const bc=rem.filter(s=>s==='blank').length;
   const total=rem.length;
   const curIsLive=S.shells[S.currentShell]==='live';
 
-  // Dealer item usage priority
-  // 1. Healing if low HP and wires not cut
   if(S.dealerHP<=2&&S.dealerHP>WIRE_CUT_THRESHOLD&&(S.dealerItems.healing_bottle||0)>0){
     dealerSay('dealerTurn');
-    if(dealerUseItem('healing_bottle')){
-      updateShells();
-      setTimeout(()=>dealerContinueTurn(),1500);return;
-    }
+    if(dealerUseItem('healing_bottle')){updateShells();setTimeout(()=>dealerContinueTurn(),1500);return;}
   }
-
-  // 2. Handcuffs if player has more health
   if((S.dealerItems.handcuffs||0)>0&&S.dealerHP<S.playerHP&&!S.cuffsActive&&total>2){
     dealerSay('dealerTurn');
-    if(dealerUseItem('handcuffs')){
-      updateShells();
-      setTimeout(()=>dealerContinueTurn(),1500);return;
-    }
+    if(dealerUseItem('handcuffs')){updateShells();setTimeout(()=>dealerContinueTurn(),1500);return;}
   }
-
-  // 3. Magnifying glass to peek
   if((S.dealerItems.magnifying_glass||0)>0&&!S.dealerKnowsShell){
     dealerUseItem('magnifying_glass');
   }
-
-  // 4. Polarity inverter if current is blank and player HP is high
   if((S.dealerItems.polarity_inverter||0)>0&&!curIsLive&&S.playerHP>=3){
     dealerSay('dealerTurn');
-    if(dealerUseItem('polarity_inverter')){
-      setTimeout(()=>dealerContinueTurn(),1500);return;
-    }
+    if(dealerUseItem('polarity_inverter')){setTimeout(()=>dealerContinueTurn(),1500);return;}
   }
-
-  // 5. Beer to eject if current is live and dealer is low
   if((S.dealerItems.beer||0)>0&&curIsLive&&S.dealerHP<=2){
     dealerSay('dealerTurn');
-    if(dealerUseItem('beer')){
-      updateShells();
-      setTimeout(()=>dealerContinueTurn(),1500);return;
-    }
+    if(dealerUseItem('beer')){updateShells();setTimeout(()=>dealerContinueTurn(),1500);return;}
   }
-
-  // 6. Handsaw if current is live and player HP is high
   if((S.dealerItems.handsaw||0)>0&&curIsLive&&S.playerHP>=3){
     dealerSay('dealerTurn');
-    if(dealerUseItem('handsaw')){
-      // Dealer will shoot player with double damage
-      setTimeout(()=>dealerShootPlayer(),1500);return;
-    }
+    if(dealerUseItem('handsaw')){setTimeout(()=>dealerShootPlayer(),1500);return;}
   }
-
-  // 7. Burner phone for future info
   if((S.dealerItems.burner_phone||0)>0&&S.dealerKnowsFutureShell<0&&total>2){
     dealerUseItem('burner_phone');
   }
 
-  // Decision: shoot self or shoot player
   if(curIsLive){
-    // Current is live — dealer prefers to shoot player
     const confidence=S.dealerKnowsShell?0.95:0.7;
-    if(Math.random()<confidence){
-      dealerShootPlayer();
-    }else{
-      dealerShootSelf();
-    }
+    if(Math.random()<confidence)dealerShootPlayer();
+    else dealerShootSelf();
   }else{
-    // Current is blank — dealer shoots self for extra turn
     dealerShootSelf();
   }
 }
@@ -935,7 +1338,7 @@ function dealerShootSelf(){
       updateChargeDisplay();updateHealth();
       playSound('shoot-live');screenShake();
       dealerSay('dealerShootSelfLive');
-      showDealerDamage();
+      dealerHit();
       if(S.dealerHP<=0){endRound(true);return}
       S.isPlayerTurn=true;updateTurnIndicator();updateButtons();
       dealerSay('playerTurn');
@@ -962,6 +1365,7 @@ function dealerShootPlayer(){
       playSound('shoot-live');screenShake();
       dealerSay('shootDealerLive');
       addBloodStreak();
+      triggerChromatic();
       if(S.playerHP<=0){endRound(false);return}
     }else{
       playSound('shoot-blank');
@@ -993,7 +1397,6 @@ function shootSelf(){
   if(!S.isPlayerTurn||S.gameOver||S.processing)return;
   if(S.currentShell>=S.shells.length)return;
   S.processing=true;updateButtons();
-
   const isLive=S.shells[S.currentShell]==='live';
   S.currentShell++;
   animateShot('player',isLive,()=>{
@@ -1006,6 +1409,7 @@ function shootSelf(){
       playSound('shoot-live');screenShake();
       dealerSay('shootSelfLive');
       addBloodStreak();
+      triggerChromatic();
       if(S.playerHP<=0){endRound(false);return}
       S.isPlayerTurn=false;updateTurnIndicator();updateButtons();
       setTimeout(()=>dealerDecide(),1000);
@@ -1023,7 +1427,6 @@ function shootDealer(){
   if(!S.isPlayerTurn||S.gameOver||S.processing)return;
   if(S.currentShell>=S.shells.length)return;
   S.processing=true;updateButtons();
-
   const isLive=S.shells[S.currentShell]==='live';
   S.currentShell++;
   animateShot('dealer',isLive,()=>{
@@ -1035,7 +1438,7 @@ function shootDealer(){
       updateChargeDisplay();updateHealth();
       playSound('shoot-live');screenShake();
       dealerSay('shootDealerLive');
-      showDealerDamage();
+      dealerHit();
       if(S.dealerHP<=0){endRound(true);return}
     }else{
       playSound('shoot-blank');
@@ -1071,21 +1474,17 @@ function animateShot(target,isLive,cb){
 
 function screenShake(){
   document.body.classList.add('screen-shake');
-  setTimeout(()=>document.body.classList.remove('screen-shake'),400);
+  setTimeout(()=>document.body.classList.remove('screen-shake'),500);
 }
 
-function showDealerDamage(){
-  document.getElementById('dealer-head').classList.add('damaged');
-  document.querySelectorAll('.blood-splatter').forEach(b=>b.classList.add('active'));
-  if(S.dealerHP<=2){
-    document.getElementById('dealer-eye-l').classList.add('dead-eye');
-    document.getElementById('dealer-eye-r').classList.add('dead-eye');
-  }
+function triggerChromatic(){
+  document.body.classList.add('chromatic');
+  setTimeout(()=>document.body.classList.remove('chromatic'),600);
 }
 
 function addBloodStreak(){
   const s=document.createElement('div');s.className='blood-streak';
-  s.style.left=(20+Math.random()*60)+'%';s.style.top='0';
+  s.style.left=(15+Math.random()*70)+'%';s.style.top='0';
   document.body.appendChild(s);setTimeout(()=>s.remove(),1500);
 }
 
@@ -1093,14 +1492,11 @@ function addBloodStreak(){
 function useItem(key){
   if(!S.isPlayerTurn||S.gameOver||S.processing)return;
   if(!S.playerItems[key]||S.playerItems[key]<=0)return;
-
   S.playerItems[key]--;
   playSound('item');
-  document.querySelectorAll('.item-slot').forEach(s=>s.classList.remove('using'));
   const slots=document.querySelectorAll('.item-slot');
   slots.forEach(s=>s.classList.add('using'));
   setTimeout(()=>slots.forEach(s=>s.classList.remove('using')),300);
-
   switch(key){
     case 'magnifying_glass':peekShell();break;
     case 'healing_bottle':useHealing();break;
@@ -1186,7 +1582,6 @@ function useAdrenaline(){
 }
 
 function useBurnerPhone(){
-  // Reveal a future shell (not the current one)
   const futureIdx=S.currentShell+1+Math.floor(Math.random()*Math.min(3,S.shells.length-S.currentShell-1));
   if(futureIdx>=S.shells.length){
     showMessage('📱','No future shells to reveal.',1500,null);
@@ -1210,7 +1605,6 @@ function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
 
 function reloadShells(){
   const rc=ROUNDS[S.round-1];
-  // Randomize live and blank counts within round ranges
   const liveCount=randInt(rc.liveMin,rc.liveMax);
   const blankCount=randInt(rc.blankMin,rc.blankMax);
   const shells=[];
@@ -1247,21 +1641,15 @@ function startRound(){
   S.wiresCut=false;S.adrenalineUsed=false;
   S.dealerKnowsShell=false;S.dealerKnowsFutureShell=-1;
   S.selectedItem=null;S.processing=false;
+  S.dealerDamage=0;
 
-  // Reset dealer visuals
-  document.getElementById('dealer-head').classList.remove('damaged');
-  document.querySelectorAll('.blood-splatter').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dealer-eye-l').classList.remove('dead-eye');
-  document.getElementById('dealer-eye-r').classList.remove('dead-eye');
   document.getElementById('wire-status').className='ok';
   document.getElementById('wire-status').textContent='WIRES OK';
 
-  // Give items
   S.playerItems={};S.dealerItems={};
   if(S.round===1){
-    // No items in round 1
+    // No items
   }else if(S.round===2){
-    // Random 2 items from pool
     const pool=[...ROUND2_POOL];
     for(let i=0;i<2;i++){
       if(pool.length===0)break;
@@ -1271,13 +1659,11 @@ function startRound(){
       S.dealerItems[item]=(S.dealerItems[item]||0)+1;
     }
   }else{
-    // Round 3: all items (1 each)
     for(const[k,v]of Object.entries(rc.items)){
       S.playerItems[k]=v;S.dealerItems[k]=v;
     }
   }
 
-  // Round transition
   const rt=document.getElementById('round-transition');
   document.getElementById('round-title-text').textContent='ROUND '+S.round;
   const names=['PURE PROBABILITY','ITEMS ARRIVE','ALL IN'];
@@ -1327,7 +1713,7 @@ function updateAll(){
 function startGame(){
   document.getElementById('title-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
-  createParticles();startAmbient();
+  createParticles();startAmbient();startFlicker();startGlitch();
   S.round=1;S.gameOver=false;startRound();
 }
 
@@ -1341,7 +1727,11 @@ document.getElementById('title-screen').onclick=startGame;
 
 function toggleRules(){document.getElementById('rules-panel').classList.toggle('active')}
 function closeRules(){document.getElementById('rules-panel').classList.remove('active')}
-function toggleAudio(){S.audioEnabled=!S.audioEnabled;if(S.audioEnabled)startAmbient();else stopAmbient()}
+function toggleAudio(){
+  S.audioEnabled=!S.audioEnabled;
+  if(S.audioEnabled){startAmbient();startFlicker();startGlitch()}
+  else{stopAmbient();stopFlicker();stopGlitch()}
+}
 
 document.addEventListener('keydown',e=>{
   if(S.gameOver)return;
